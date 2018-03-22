@@ -1,5 +1,6 @@
 import threading
 from socket import *
+import os
 
 class FTPThread(threading.Thread):
     def __init__(self,threadID,connectionSocket):
@@ -8,6 +9,7 @@ class FTPThread(threading.Thread):
         self.connectionSocket = connectionSocket
         self.quitting = False
         self.SendReply(220)
+        self.buffer = 4096
         
     def run(self):
         while self.quitting == False:
@@ -45,10 +47,25 @@ class FTPThread(threading.Thread):
         self.portNumber = port
         self.SendReply(200)
         
-    def Retrieve(self,p):
-        self.SendReply(200)
-        self.SendReply(250)
-        print p
+    def Retrieve(self,fileName):
+        self.SendReply(150)
+        fileExists = False
+        
+        for tempFileName in os.listdir("./Users/" + self.currentUsername):
+            if (tempFileName == fileName): 
+                fileExists = True
+                break
+        
+        if fileExists:
+            localFile = open("./Users/" + fileName,"rb")
+            uploadData = localFile.read(self.buffer)
+            while uploadData:
+                self.connectionSocket.send(uploadData)
+                uploadData= localFile.read(self.buffer)
+            localFile.close()
+            self.SendReply(226)
+        else:
+            self.SendReply(550)
         
     def Store(self,p):
         self.SendReply(200)
