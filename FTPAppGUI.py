@@ -123,11 +123,11 @@ class Download(tk.Frame):
         downloadButton.grid(row = 1, column = 2, padx = 20, pady = 40)
         
     def GetFileList(self):
-        fileList = {0,1,2,3,4,5,6,7,8,9,10,11}
-        return fileList
+        fileList = {0,1,3,2,4,5,6,7,8,9,10,11}
+        return sorted(fileList)
     
     def Download(self):
-        filename = self.downloadList.selectedItem
+        filename = self.downloadList.get(self.downloadList.curselection()[0])
         print filename
 
 class Upload(tk.Frame):
