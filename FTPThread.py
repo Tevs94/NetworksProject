@@ -1,4 +1,5 @@
 import threading
+import os
 from socket import *
 
 class FTPThread(threading.Thread):
@@ -8,6 +9,7 @@ class FTPThread(threading.Thread):
         self.connectionSocket = connectionSocket
         self.quitting = False
         self.SendReply(220)
+        self.loggedIn = False
         
     def run(self):
         while self.quitting == False:
@@ -36,15 +38,25 @@ class FTPThread(threading.Thread):
     def CheckPassword(self,password):
         if password == self.currentUserPassword:
             self.SendReply(230)
+            self.loggedIn = True
+            self.userFolder = "/Users/" + self.currentUsername
             print "Authenticated"
         else:
             self.SendReply(530)
             print "Incorrect Password"
-
+    
     def Port(self,port):
         self.portNumber = port
         self.SendReply(200)
-        
+    
+    def List(self):
+        if self.loggedIn:
+            self.SendReply(150)
+            dirList = os.listdir('./Users/'+self.currentUsername)
+            print dirList
+        else:
+            self.SendReply(530)  
+            
     def Retrieve(self,p):
         self.SendReply(200)
         self.SendReply(250)
@@ -66,6 +78,7 @@ class FTPThread(threading.Thread):
             "USER": lambda self: self.CheckUserName(self.parameter),
             "PASS": lambda self: self.CheckPassword(self.parameter),
             "PORT": lambda self: self.Port(self.parameter),
+            "LIST": lambda self: self.List(),
             "RETR": lambda self: self.Retrieve(self.parameter),
             "STOR": lambda self: self.Store(self.parameter),
             "NOOP": lambda self: self.OkServer(),
@@ -79,7 +92,6 @@ class FTPThread(threading.Thread):
             commandParameter = ""
         else:
             commandParameter = command[1]
-    
         try:
             self.parameter = commandParameter
             self.commands.get(commandCode)(self)
@@ -113,3 +125,5 @@ class FTPThread(threading.Thread):
 thread = FTPThread(1,1000)
 #thread.start() Uncomment when the thread must recieve continuously
 thread.CommandResolve("USER Tev")
+thread.CommandResolve("PASS Pass1")
+thread.CommandResolve("LIST")
