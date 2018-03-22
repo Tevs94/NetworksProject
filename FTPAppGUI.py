@@ -4,7 +4,7 @@ from enum import Enum
 class FTPGUI(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
-        self.title("FTP Application")
+        self.title("Somewhat FTP")
         # adapted from https://stackoverflow.com/questions/7546050/switch-between-two-frames-in-tkinter
         # and https://stackoverflow.com/questions/35991126/tkinter-frame-resize
         container = tk.Frame(self)
