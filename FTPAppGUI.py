@@ -1,5 +1,6 @@
 import Tkinter as tk
 from enum import Enum
+from Project_Client import ClientHandler
 
 class FTPGUI(tk.Tk):
     def __init__(self):

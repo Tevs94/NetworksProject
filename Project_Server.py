@@ -1,5 +1,6 @@
 from socket import *
 import os
+from FTPThread import FTPThread
 
 publicSocket = socket(AF_INET, SOCK_STREAM)
 publicSocket.bind(('', 3333)) #Initial socket
@@ -7,6 +8,11 @@ publicSocket.listen(10) #1 queued connection request allowed
 
 print('Server online...')
 privateSocket, clientAdress = publicSocket.accept() #accept handshake request, create dedicateds socket for client and finish handshake
+thread = FTPThread(1,privateSocket)
+thread.start()
+
+
+'''
 print clientAdress
 fileName = 'temp'
 fileExists = False
@@ -37,3 +43,4 @@ while (fileName != 'exit'):
 
 privateSocket.close()
 publicSocket.close()
+'''

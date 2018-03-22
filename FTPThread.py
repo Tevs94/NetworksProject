@@ -1,12 +1,12 @@
 import threading
 import os
 from socket import *
-import os
 
 class FTPThread(threading.Thread):
-    def __init__(self,threadID,connectionSocket):
+    def __init__(self,threadID,connectionSocket, portNum):
         threading.Thread.__init__(self)
         self.threadID = threadID
+        self.dataportNumber = portNum
         self.connectionSocket = connectionSocket
         self.quitting = False
         self.SendReply(220)
@@ -49,25 +49,27 @@ class FTPThread(threading.Thread):
             print "Incorrect Password"
     
     def Port(self,port):
-        self.portNumber = port
+        self.dataportNumber = port
         self.SendReply(200)
 
     def Retrieve(self,fileName):
-        self.SendReply(150)
         fileExists = False
         
         for tempFileName in os.listdir("./Users/" + self.currentUsername):
             if (tempFileName == fileName): 
                 fileExists = True
+                self.SendReply(150)
                 break
-        
+
         if fileExists:
-            localFile = open("./Users/" + fileName,"rb")
+            localFile = open("Users/"+ self.currentUsername + "/" + fileName,"rb")
             uploadData = localFile.read(self.buffer)
+            codeCheck = uploadData[0]+uplo
             while uploadData:
-                self.connectionSocket.send(uploadData)
+                dataSocket.send(uploadData)
                 uploadData= localFile.read(self.buffer)
             localFile.close()
+            self.dataSocket.close()
             self.SendReply(226)
         else:
             self.SendReply(550)
@@ -136,12 +138,10 @@ class FTPThread(threading.Thread):
             }
     
     def SendReply(self, code):
-        message = self.replies.get(code)(self)
+        message = self.replies.get(code)
         self.connectionSocket.send(message)
 
-
-thread = FTPThread(1,1000)
-#thread.start() Uncomment when the thread must recieve continuously
-thread.CommandResolve("USER Tev")
-thread.CommandResolve("PASS Pass1")
-thread.CommandResolve("LIST")
+    def CreateDataConnection(self):
+        publicSocket = socket(AF_INET, SOCK_STREAM)
+        publicSocket.bind(('', port)) #Initial socket
+        publicSocket.listen(1)
