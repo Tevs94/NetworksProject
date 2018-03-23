@@ -1,24 +1,26 @@
 import Tkinter as tk
+import tkMessageBox
 from enum import Enum
-from Project_Client import ClientHandler
+import Project_Client as cl
 
 class FTPGUI(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
         self.title("Somewhat FTP")
-        # adapted from https://stackoverflow.com/questions/7546050/switch-between-two-frames-in-tkinter
-        # and https://stackoverflow.com/questions/35991126/tkinter-frame-resize
+        self.hasClient= False
+        self.protocol("WM_DELETE_WINDOW", self.CloseApp)
         container = tk.Frame(self)
         container.pack(side="top", fill="both", expand=True)
         
         self.frames = {}
-        for F in (ChooseServer, Login, UploadDownload, Download, Upload):
-            pageName = F.__name__
-            frame = F(container, self)
+        for Frameclass in (ChooseServer, Login, UploadDownload, Download, Upload):
+            pageName = Frameclass.__name__
+            frame = Frameclass(container, self)
             self.frames[pageName] = frame
             frame.grid(row=0, column=0, sticky="NSEW")
     
         self.DisplayPage("ChooseServer")
+        
                 
     def DisplayPage(self,pageName):
         for frame in self.frames.values():
@@ -26,6 +28,13 @@ class FTPGUI(tk.Tk):
             
         frame = self.frames[pageName]
         frame.grid()
+        
+    def CloseApp(self):
+        if self.hasClient == False:
+            self.destroy()
+        else:
+            #self.client.Quit()
+            self.destroy()
 
        
 class ChooseServer(tk.Frame):
@@ -53,7 +62,15 @@ class ChooseServer(tk.Frame):
     def Connect(self):
         server = self.serverEntry.get()
         port = self.portEntry.get()
-        self.controllerWindow.DisplayPage("Login")
+        try:
+            #self.controllerWindow.client = cl.ClientHandler(server, port)
+            self.controllerWindow.hasClient = True
+            self.controllerWindow.DisplayPage("Login")
+        except:
+            tkMessageBox.showinfo("Connection Error", "The server you tried to connect to did not respond or denied you request")
+            self.controllerWindow.DisplayPage("ChooseServer")
+            
+       
             
         
 class Login(tk.Frame):
@@ -81,7 +98,13 @@ class Login(tk.Frame):
     def CaptureLoginDetails(self):
         username = self.usernameEntry.get()
         password = self.passwordEntry.get()
-        self.controllerWindow.DisplayPage("UploadDownload")
+        try:
+            #self.controllerWindow.client.Login(username, password)
+            self.controllerWindow.DisplayPage("UploadDownload")
+        except cl.LoginError:
+            tkMessageBox.showinfo("Login Error", "The Login Details you entered were incorrect")
+            self.controllerWindow.DisplayPage("Login")
+       
         
         
 class UploadDownload(tk.Frame):
@@ -104,11 +127,11 @@ class Download(tk.Frame):
         self.window = window
         self.controllerWindow = controllerWindow
 
-        self.downloadLabel = tk.Label(self,text = "Select a file to download")
-        self.downloadLabel.grid(row = 0,padx = 30,pady = 10, columnspan = 2)
+        self.downloadLabel = tk.Label(self,text = "Select a file to download and the path to download to")
+        self.downloadLabel.grid(row = 0,padx = 30,pady = 10, columnspan = 4)
         
         self.downloadList = tk.Listbox(self, height = 10)
-        self.downloadList.grid(sticky = tk.E,row = 1, column = 0,columnspan = 1, padx = 20, pady = 20)
+        self.downloadList.grid(sticky = tk.E,row = 1, column = 0,columnspan = 1, padx = 10, pady = 10)
         
         filenames = self.GetFileList()
         for filename in filenames:
@@ -116,21 +139,42 @@ class Download(tk.Frame):
         
         if len(filenames)>10:
             scrollbar = tk.Scrollbar(self)
-            scrollbar.grid(sticky=tk.E + tk.N + tk.S, row = 1, columnspan = 1, column = 0, pady = 20)
+            scrollbar.grid(sticky=tk.E + tk.N + tk.S, row = 1, columnspan = 1, column = 0, pady = 10)
             self.downloadList.config(yscrollcommand=scrollbar.set)
             scrollbar.config(command=self.downloadList.yview)
         
+        self.downloadPathLabel = tk.Label(self, text = "Path to Download to:")
+        self.downloadPathLabel.grid(row = 1,column = 2,padx = 5,pady = 5)
+        
+        self.downloadPathEntry = tk.Entry(self)
+        self.downloadPathEntry.grid(row = 1,column = 3,padx = 10,pady =5)
+        
         downloadButton = tk.Button(self, text = "Download", command = lambda:self.Download())
-        downloadButton.grid(row = 1, column = 2, padx = 20, pady = 40)
+        downloadButton.grid(row = 3, column = 0,columnspan = 4 ,padx = 5, pady = 5)
+        
+        backButton = tk.Button(self, text = "Back", command = lambda:self.controllerWindow.DisplayPage("UploadDownload"))
+        backButton.grid(row = 4, column = 0,columnspan = 4, pady = 10)
         
     def GetFileList(self):
         fileList = {0,1,3,2,4,5,6,7,8,9,10,11}
         return sorted(fileList)
     
     def Download(self):
-        filename = self.downloadList.get(self.downloadList.curselection()[0])
-        print filename
-
+        try:
+            filename = self.downloadList.get(self.downloadList.curselection()[0])
+            downloadPath = self.downloadPathEntry.get()
+            try:
+                #self.controllerWindow.client.RETR(downloadPath,filename)
+                tkMessageBox.showinfo("File Transfer in Progress", "The file you requested is being downloaded now. Please wait for it to finish before you continue.")
+            except cl.BadConnection:
+                tkMessageBox.showinfo("Connection Error", "There was an error with the data connection transfer. Please try again later")
+                self.controllerWindow.DisplayPage("Download")
+            except cl.FileDoesntExist as fde:
+                tkMessageBox.showinfo("File Error", "The file: " + fde.fileName + " does not exist at the server")
+                self.controllerWindow.DisplayPage("Download")
+        except IndexError:
+            tkMessageBox.showinfo("Selection Error", "Please Select a File before clicking download.")
+        
 class Upload(tk.Frame):
     def __init__(self, window,controllerWindow):
         tk.Frame.__init__(self, window)
@@ -144,7 +188,10 @@ class Upload(tk.Frame):
         self.uploadEntry.grid(row = 1,padx = 10,pady = 10)
         
         uploadButton = tk.Button(self, text = "Upload", command = lambda:self.Upload())
-        uploadButton.grid(row = 2, padx = 20, pady = 40)
+        uploadButton.grid(row = 2, padx = 20, pady = 10)
+        
+        backButton = tk.Button(self, text = "Back", command = lambda:self.controllerWindow.DisplayPage("UploadDownload"))
+        backButton.grid(row = 3, padx = 20, pady = 10)
         
     def Upload(self):
         uploadPath = self.uploadEntry.get()
