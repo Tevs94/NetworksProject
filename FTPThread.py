@@ -92,8 +92,9 @@ class FTPThread(threading.Thread):
             
             if(os.path.isdir('./Users/'+ directory)):
                 dirList = os.listdir('./Users/'+ directory)
+                print str(dirList)
                 dataConnection = self.CreateDataConnection()
-                dataConnection.send(dirList)
+                dataConnection.send(str(dirList))
                 dataConnection.close()
             else:
                 self.SendReply(550)
@@ -145,9 +146,9 @@ class FTPThread(threading.Thread):
         try:
             self.parameter = commandParameter
             self.commands.get(commandCode)(self)
-        except (KeyError, TypeError):
+        except (KeyError, TypeError) as e:
             self.SendReply(500)
-            print "Invalid Command" 
+            print e
         
             
     replies = {

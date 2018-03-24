@@ -117,19 +117,6 @@ class ClientHandler():
             raise AccessDenied
         else:
             raise LoginError
-        
-    def CommandResolve(self,commandString):
-        command = commandString.split()
-        commandCode = command[0]
-        if command.__len__() == 1:
-            commandParameter = ""
-        else:
-            commandParameter = command[1]
-        try:
-            self.parameter = commandParameter
-            self.commands.get(commandCode)(self)
-        except (KeyError, TypeError):
-            print "Invalid Command" 
             
     def SendBasicMessage(self, message):
          self.connectionSocket.send(message)
