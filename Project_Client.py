@@ -1,9 +1,10 @@
 from socket import *
+import os
 
 class LoginError(Exception):
     pass
 
-class FileDoesntExist(Exception):
+class DoesntExist(Exception):
     def __init__(self, fileName):
         self.fileName = fileName
 
@@ -13,32 +14,36 @@ class BadConnection(Exception):
 class PortChangeFailed(Exception):
     pass
 
+class AccessDenied(Exception):
+    pass
+
 class ClientHandler():
-    def __init__(self,connectionSocket):
-        self.connectionSocket = connectionSocket
+    def __init__(self, IP_Address, Socket):
+        clientSocket = socket(AF_INET, SOCK_STREAM) #Set IPv4 and TCP
+        clientSocket.connect((IP_Address, Socket)) #Intial handshake call to set up connection
+        self.connectionSocket = clientSocket
         self.dataPort = 10000
         self.buffer = 4096
         self.parameter = ""
         
-    def RETR(self,fileAddress ,fileName):
+    def RETR(self,fileAddress ,fileName): #still needs to replace download with file address
         self.connectionSocket.send("RETR " + fileName)
-        dataSocket = socket(AF_INET, SOCK_STREAM)
-        dataSocket.bind(('', self.dataPort))
-        dataSocket.listen(1) 
-        recieveSocket, clientAddress = dataSocket.accept()
-        downloadData = self.connectionSocket.recv(self.buffer)
+        reply = self.connectionSocket.recv(self.buffer)
         
-        if "150" in downloadData:
-            downloadData = self.recieveSocket.recv(self.buffer)
+        if "150" in reply:
+            recieveSocket = self.EstablishConnection()
+            downloadData = recieveSocket.recv(self.buffer)
             localFile = open("./Downloads/" + fileName, "wb")
             while downloadData:
                 localFile.write(downloadData)
-                downloadData = self.recieveSocket.recv(self.buffer)
-            downloadData = self.connectionSocket.recv(self.buffer)
+                downloadData = recieveSocket.recv(self.buffer)
+            reply = self.connectionSocket.recv(self.buffer)
             localFile.close()
             print downloadData
-        elif "550" in downloadData:
-            raise FileDoesntExist(fileName)
+        elif "550" in reply:
+            raise DoesntExist(fileName)
+        elif "530" in reply:
+            raise LoginError
         else:
             raise BadConnection
             
@@ -56,13 +61,52 @@ class ClientHandler():
             raise LoginError
             
     def Port(self,port): 
-        self.connectionSocket.send("USER " + username)
+        self.connectionSocket.send(port)
+        values = port.split(',')
         reply = self.connectionSocket.recv(self.buffer)
         if "200" in reply:
-            self.dataPort = port
+            self.dataPort = (int(values[4]) * 256) + int(values[5])
         else:
             raise PortChangeFailed
+            
+    def List(self, directory): #needs to default to None as per RFC
+        self.connectionSocket.send("LIST " + directory)
+        reply = self.connectionSocket.recv(self.buffer)
+        if "150" in reply:
+            dataConnection = self.EstablishConnection()
+            dirList = dataConnection.recv(self.buffer)
+            print dirList
+        elif "550" in reply:
+            raise DoesntExist(directory)
+        else:
+            raise LoginError
+        
+    def STOR(self,fileAddress ,fileName): 
+        self.connectionSocket.send("STOR " + fileName)
+        reply = self.connectionSocket.recv(self.buffer)
+        fileExists = False
+        
+        if "150" in reply:
+            for tempFileName in os.listdir(fileAddress + fileName):
+                if (tempFileName == fileName): 
+                    fileExists = True
+                    dataSocket = self.EstablishConnection()
+                    break
     
+            if fileExists:
+                localFile = open(fileAddress + "/" + fileName,"rb")
+                uploadData = localFile.read(self.buffer)
+                while uploadData:
+                    dataSocket.send(uploadData)
+                    uploadData= localFile.read(self.buffer)
+                localFile.close()
+            else:
+                raise DoesntExist(fileName)
+        elif "550" in reply:
+            raise AccessDenied
+        else:
+            raise LoginError
+        
     def CommandResolve(self,commandString):
         command = commandString.split()
         commandCode = command[0]
@@ -78,3 +122,12 @@ class ClientHandler():
             
     def SendBasicMessage(self, message):
          self.connectionSocket.send(message)
+         
+    def EstablishConnection(self):
+        dataSocket = socket(AF_INET, SOCK_STREAM)
+        dataSocket.bind(('', self.dataPort))
+        dataSocket.listen(1) 
+        recieveSocket, clientAddress = dataSocket.accept()
+        return recieveSocket
+
+newC = ClientHandler("localhost", 3333)
