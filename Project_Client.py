@@ -93,19 +93,21 @@ class ClientHandler():
             raise LoginError
         
     def STOR(self,fileAddress): 
-        self.connectionSocket.send("STOR " + fileAddress)
+        AddressParts = fileAddress.split('/')
+        fileName = AddressParts[-1]
+        self.connectionSocket.send("STOR " + fileName)
         reply = self.connectionSocket.recv(self.buffer)
         fileExists = False
-        filename = ""
+        fileAddressOnly = fileAddress.replace(fileName,"")
         if "150" in reply:
-            for tempFileName in os.listdir(fileAddress + fileName):
+            for tempFileName in os.listdir(fileAddressOnly):
                 if (tempFileName == fileName): 
                     fileExists = True
                     dataSocket = self.EstablishConnection()
                     break
     
             if fileExists:
-                localFile = open(fileAddress + "/" + fileName,"rb")
+                localFile = open(fileAddress,"rb")
                 uploadData = localFile.read(self.buffer)
                 while uploadData:
                     dataSocket.send(uploadData)
