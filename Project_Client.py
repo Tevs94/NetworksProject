@@ -78,7 +78,10 @@ class ClientHandler():
             raise PortChangeFailed
             
     def List(self, directory): #needs to default to None as per RFC
-        self.connectionSocket.send("LIST " + directory)
+        if directory is not None:
+            self.connectionSocket.send("LIST " + directory)
+        else:
+            self.connectionSocket.send("LIST")
         reply = self.connectionSocket.recv(self.buffer)
         if "150" in reply:
             dataConnection = self.EstablishConnection()
