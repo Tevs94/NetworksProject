@@ -128,7 +128,7 @@ class FTPThread(threading.Thread):
             "USER": lambda self: self.CheckUserName(self.parameter),
             "PASS": lambda self: self.CheckPassword(self.parameter),
             "PORT": lambda self: self.Port(self.parameter),
-            "LIST": lambda self: self.List(self.parameter),
+            "LIST": lambda self: self.List(),
             "RETR": lambda self: self.Retrieve(self.parameter),
             "STOR": lambda self: self.Store(self.parameter),
             "NOOP": lambda self: self.OkServer(),
@@ -139,7 +139,7 @@ class FTPThread(threading.Thread):
         command = commandString.split()
         commandCode = command[0]
         if command.__len__() == 1:
-            commandParameter = ""
+            commandParameter = None
         else:
             commandParameter = command[1]
         try:
