@@ -45,7 +45,7 @@ class FTPThread(threading.Thread):
         if password == self.currentUserPassword:
             self.SendReply(230)
             self.loggedIn = True
-            self.userFolder = "/Users/" + self.currentUsername + "/"
+            self.userFolder = "./Users/" + self.currentUsername + "/"
             print "Authenticated"
         else:
             self.SendReply(530)
