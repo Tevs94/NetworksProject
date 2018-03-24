@@ -3,16 +3,19 @@ import os
 from socket import *
 
 class FTPThread(threading.Thread):
-    def __init__(self,threadID,connectionSocket, portNum):
+    def __init__(self,threadID,connectionSocket, portNum, clientAddress):
         threading.Thread.__init__(self)
         self.threadID = threadID
         self.dataportNumber = portNum
+        self.controlPort = clientAddress[1]
+        self.clientIPAddress = clientAddress[0]
+        self.dataIPAddress = self.clientIPAddress
         self.connectionSocket = connectionSocket
         self.quitting = False
         self.SendReply(220)
         self.buffer = 4096
         self.loggedIn = False
-
+        
         
     def run(self):
         while self.quitting == False:
@@ -49,43 +52,70 @@ class FTPThread(threading.Thread):
             print "Incorrect Password"
     
     def Port(self,port):
-        self.dataportNumber = port
+        values = port.split(',')
+        self.dataportNumber = (int(values[4]) * 256) + int(values[5])
+        self.dataIPAddress = values[0] + '.' + values[1] + '.' + values[2] + '.' + values[3]
         self.SendReply(200)
 
     def Retrieve(self,fileName):
-        fileExists = False
-        
-        for tempFileName in os.listdir("./Users/" + self.currentUsername):
-            if (tempFileName == fileName): 
-                fileExists = True
-                self.SendReply(150)
-                break
-
-        if fileExists:
-            localFile = open("Users/"+ self.currentUsername + "/" + fileName,"rb")
-            uploadData = localFile.read(self.buffer)
-            codeCheck = uploadData[0]+uplo
-            while uploadData:
-                dataSocket.send(uploadData)
-                uploadData= localFile.read(self.buffer)
-            localFile.close()
-            self.dataSocket.close()
-            self.SendReply(226)
+        if self.loggedIn:
+            fileExists = False
+            
+            for tempFileName in os.listdir("./Users/" + self.currentUsername):
+                if (tempFileName == fileName): 
+                    fileExists = True
+                    self.SendReply(150)
+                    dataSocket = self.CreateDataConnection()
+                    break
+    
+            if fileExists:
+                localFile = open("Users/"+ self.currentUsername + "/" + fileName,"rb")
+                uploadData = localFile.read(self.buffer)
+                while uploadData:
+                    dataSocket.send(uploadData)
+                    uploadData= localFile.read(self.buffer)
+                localFile.close()
+                dataSocket.close()
+                self.SendReply(226)
+            else:
+                self.SendReply(550)
         else:
-            self.SendReply(550)
+            self.SendReply(530)  
     
     def List(self):
         if self.loggedIn:
             self.SendReply(150)
-            dirList = os.listdir('./Users/'+self.currentUsername)
-            print dirList
+            if self.parameter is None:
+                directory = ""
+            else:
+                directory = self.currentUsername
+            
+            if(os.path.isdir('./Users/'+ directory)):
+                dirList = os.listdir('./Users/'+ directory)
+                dataConnection = self.CreateDataConnection()
+                dataConnection.send(dirList)
+                dataConnection.close()
+            else:
+                self.SendReply(550)
         else:
             self.SendReply(530)  
               
-    def Store(self,p):
-        self.SendReply(200)
-        self.SendReply(250)
-        print p
+    def Store(self, fileName):
+        if self.loggedIn:
+            self.SendReply(150)
+            dataSocket = self.CreateDataConnection()
+            downloadData = dataSocket.recv(self.buffer)
+            localFile = open('./Users/' + fileName, "wb")
+            while downloadData:
+                localFile.write(downloadData)
+                downloadData = dataSocket.recv(self.buffer)
+            self.SendReply(226)
+            localFile.close()
+            dataSocket.close()
+            print downloadData
+            #No idea why it would send an access denied
+        else:
+            self.SendReply(530) 
         
     def OkServer(self):
         print "OK Server"
@@ -98,7 +128,7 @@ class FTPThread(threading.Thread):
             "USER": lambda self: self.CheckUserName(self.parameter),
             "PASS": lambda self: self.CheckPassword(self.parameter),
             "PORT": lambda self: self.Port(self.parameter),
-            "LIST": lambda self: self.List(),
+            "LIST": lambda self: self.List(self.parameter),
             "RETR": lambda self: self.Retrieve(self.parameter),
             "STOR": lambda self: self.Store(self.parameter),
             "NOOP": lambda self: self.OkServer(),
@@ -142,6 +172,6 @@ class FTPThread(threading.Thread):
         self.connectionSocket.send(message)
 
     def CreateDataConnection(self):
-        publicSocket = socket(AF_INET, SOCK_STREAM)
-        publicSocket.bind(('', port)) #Initial socket
-        publicSocket.listen(1)
+        dataSocket = socket(AF_INET, SOCK_STREAM) #Set IPv4 and TCP
+        dataSocket.connect((self.dataIPAddress, self.dataportNumber))
+        return dataSocket
