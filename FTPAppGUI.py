@@ -26,6 +26,8 @@ class FTPGUI(tk.Tk):
             frame.grid_remove()
             
         frame = self.frames[pageName]
+        if pageName == "Download":
+            self.frames[pageName].PopulateFileList()
         frame.grid()
         
     def CloseApp(self):
@@ -134,15 +136,15 @@ class Download(tk.Frame):
         self.downloadList = tk.Listbox(self, height = 10)
         self.downloadList.grid(sticky = tk.E,row = 1, column = 0,columnspan = 1, padx = 10, pady = 10)
         
-        filenames = self.GetFileList()
-        for filename in filenames:
-            self.downloadList.insert(tk.END, filename)
+        if self.controllerWindow.hasClient:
+            for filename in self.fileList:
+                self.downloadList.insert(tk.END, filename)
         
-        if len(filenames)>10:
-            scrollbar = tk.Scrollbar(self)
-            scrollbar.grid(sticky=tk.E + tk.N + tk.S, row = 1, columnspan = 1, column = 0, pady = 10)
-            self.downloadList.config(yscrollcommand=scrollbar.set)
-            scrollbar.config(command=self.downloadList.yview)
+            if len(self.List)>10:
+                scrollbar = tk.Scrollbar(self)
+                scrollbar.grid(sticky=tk.E + tk.N + tk.S, row = 1, columnspan = 1, column = 0, pady = 10)
+                self.downloadList.config(yscrollcommand=scrollbar.set)
+                scrollbar.config(command=self.downloadList.yview)
         
         self.downloadPathLabel = tk.Label(self, text = "Path to Download to:")
         self.downloadPathLabel.grid(row = 1,column = 2,padx = 5,pady = 5)
@@ -156,12 +158,9 @@ class Download(tk.Frame):
         backButton = tk.Button(self, text = "Back", command = lambda:self.controllerWindow.DisplayPage("UploadDownload"))
         backButton.grid(row = 4, column = 0,columnspan = 4, pady = 10)
         
-    def GetFileList(self):
+    def PopulateFileList(self):
         try:
-            #fileList = self.controllerWindow.client.List(None)
-            print "Tried to get list"
-            fileList = [1,2]
-            return sorted(fileList)
+            self.fileList = self.controllerWindow.client.List(None)
         except cl.DoesntExist:
             tkMessageBox.showinfo("Directory Error", "The Directory you tried to list does not exist on the server.")
             self.controllerWindow.DisplayPage("UploadDownload")
