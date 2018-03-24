@@ -167,6 +167,7 @@ class Download(tk.Frame):
         try:
             self.fileList = self.controllerWindow.client.List(None)
             self.downloadList.configure(state="normal")
+            self.downloadList.delete(1.0,tk.END)
             self.downloadList.insert(tk.END,self.fileList)
             self.downloadList.configure(state="disabled")
         except cl.DoesntExist:

@@ -94,7 +94,7 @@ class ClientHandler():
             raise LoginError
         
     def STOR(self,fileAddress): 
-        AddressParts = fileAddress.split('/')
+        AddressParts = fileAddress.split("\\")
         fileName = AddressParts[-1]
         self.connectionSocket.send("STOR " + fileName)
         reply = self.connectionSocket.recv(self.buffer)
