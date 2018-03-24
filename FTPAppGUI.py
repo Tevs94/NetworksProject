@@ -131,36 +131,46 @@ class Download(tk.Frame):
         self.controllerWindow = controllerWindow
 
         self.downloadLabel = tk.Label(self,text = "Select a file to download and the path to download to")
-        self.downloadLabel.grid(row = 0,padx = 30,pady = 10, columnspan = 4)
+        self.downloadLabel.grid(row = 0,padx = 30,pady = 10, columnspan = 2)
         
-        self.downloadList = tk.Listbox(self, height = 10)
-        self.downloadList.grid(sticky = tk.E,row = 1, column = 0,columnspan = 1, padx = 10, pady = 10)
+        self.listLabel = tk.Label(self,text = "The server responded with this list of files:")
+        self.listLabel.grid(row = 1,padx = 30,pady = 10, columnspan = 2)
+        
+        self.downloadList = tk.Text(self, height = 10, width = 30)
+        self.downloadList.grid(row = 2, column = 0,columnspan = 2, padx = 10, pady = 10)
+        self.downloadList.configure(state="disabled")
         
         if self.controllerWindow.hasClient:
-            for filename in self.fileList:
-                self.downloadList.insert(tk.END, filename)
+            
+            scrollbar = tk.Scrollbar(self)
+            scrollbar.grid(sticky=tk.E + tk.N + tk.S, row = 1, columnspan = 1, column = 0, pady = 10)
+            self.downloadList.config(yscrollcommand=scrollbar.set)
+            scrollbar.config(command=self.downloadList.yview)
+            
+        self.fileNameLabel = tk.Label(self, text = "File to Download:")
+        self.fileNameLabel.grid(row = 3,column = 0,padx = 10,pady = 5)
         
-            if len(self.List)>10:
-                scrollbar = tk.Scrollbar(self)
-                scrollbar.grid(sticky=tk.E + tk.N + tk.S, row = 1, columnspan = 1, column = 0, pady = 10)
-                self.downloadList.config(yscrollcommand=scrollbar.set)
-                scrollbar.config(command=self.downloadList.yview)
+        self.fileNameEntry = tk.Entry(self)
+        self.fileNameEntry.grid(row = 3,column = 1,padx = 10,pady =5)
         
         self.downloadPathLabel = tk.Label(self, text = "Path to Download to:")
-        self.downloadPathLabel.grid(row = 1,column = 2,padx = 5,pady = 5)
+        self.downloadPathLabel.grid(row = 4,column = 0,padx = 10,pady = 5)
         
         self.downloadPathEntry = tk.Entry(self)
-        self.downloadPathEntry.grid(row = 1,column = 3,padx = 10,pady =5)
+        self.downloadPathEntry.grid(row = 4,column = 1,padx = 10,pady =5)
         
         downloadButton = tk.Button(self, text = "Download", command = lambda:self.Download())
-        downloadButton.grid(row = 3, column = 0,columnspan = 4 ,padx = 5, pady = 5)
+        downloadButton.grid(row = 5, column = 0,columnspan = 2 ,padx = 10, pady = 5)
         
         backButton = tk.Button(self, text = "Back", command = lambda:self.controllerWindow.DisplayPage("UploadDownload"))
-        backButton.grid(row = 4, column = 0,columnspan = 4, pady = 10)
+        backButton.grid(row = 6, column = 0,columnspan = 2, pady = 10)
         
     def PopulateFileList(self):
         try:
             self.fileList = self.controllerWindow.client.List(None)
+            self.downloadList.configure(state="normal")
+            self.downloadList.insert(tk.END,self.fileList)
+            self.downloadList.configure(state="disabled")
         except cl.DoesntExist:
             tkMessageBox.showinfo("Directory Error", "The Directory you tried to list does not exist on the server.")
             self.controllerWindow.DisplayPage("UploadDownload")
@@ -173,7 +183,7 @@ class Download(tk.Frame):
     
     def Download(self):
         try:
-            filename = self.downloadList.get(self.downloadList.curselection()[0])
+            filename = self.fileNameEntry.get()
             downloadPath = self.downloadPathEntry.get()
             try:
                 self.controllerWindow.client.RETR(downloadPath,filename)
