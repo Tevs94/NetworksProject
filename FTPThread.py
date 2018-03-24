@@ -92,9 +92,10 @@ class FTPThread(threading.Thread):
             
             if(os.path.isdir(self.userFolder + directory)):
                 dirList = os.listdir(self.userFolder + directory)
-                print str(dirList)
+                sendString = ", ".join(dirList)
+                print sendString
                 dataConnection = self.CreateDataConnection()
-                dataConnection.send(str(dirList))
+                dataConnection.send(sendString)
                 dataConnection.close()
             else:
                 self.SendReply(550)
