@@ -45,7 +45,7 @@ class FTPThread(threading.Thread):
         if password == self.currentUserPassword:
             self.SendReply(230)
             self.loggedIn = True
-            self.userFolder = "/Users/" + self.currentUsername
+            self.userFolder = "/Users/" + self.currentUsername + "/"
             print "Authenticated"
         else:
             self.SendReply(530)
@@ -61,7 +61,7 @@ class FTPThread(threading.Thread):
         if self.loggedIn:
             fileExists = False
             
-            for tempFileName in os.listdir("./Users/" + self.currentUsername):
+            for tempFileName in os.listdir(self.userFolder):
                 if (tempFileName == fileName): 
                     fileExists = True
                     self.SendReply(150)
@@ -69,7 +69,7 @@ class FTPThread(threading.Thread):
                     break
     
             if fileExists:
-                localFile = open("Users/"+ self.currentUsername + "/" + fileName,"rb")
+                localFile = open(self.userFolder + fileName,"rb")
                 uploadData = localFile.read(self.buffer)
                 while uploadData:
                     dataSocket.send(uploadData)
@@ -90,8 +90,8 @@ class FTPThread(threading.Thread):
             else:
                 directory = self.parameter
             
-            if(os.path.isdir('./Users/'+ directory)):
-                dirList = os.listdir('./Users/'+ directory)
+            if(os.path.isdir(self.userFolder + directory)):
+                dirList = os.listdir(self.userFolder + directory)
                 print str(dirList)
                 dataConnection = self.CreateDataConnection()
                 dataConnection.send(str(dirList))
@@ -106,7 +106,7 @@ class FTPThread(threading.Thread):
             self.SendReply(150)
             dataSocket = self.CreateDataConnection()
             downloadData = dataSocket.recv(self.buffer)
-            localFile = open('./Users/' + fileName, "wb")
+            localFile = open(self.userFolder + fileName, "wb")
             while downloadData:
                 localFile.write(downloadData)
                 downloadData = dataSocket.recv(self.buffer)
