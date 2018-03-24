@@ -16,11 +16,13 @@ class PortChangeFailed(Exception):
 
 class AccessDenied(Exception):
     pass
+class QuitError(Exception):
+    pass
 
 class ClientHandler():
-    def __init__(self, IP_Address, Socket):
+    def __init__(self, IP_Address, Port):
         clientSocket = socket(AF_INET, SOCK_STREAM) #Set IPv4 and TCP
-        clientSocket.connect((IP_Address, Socket)) #Intial handshake call to set up connection
+        clientSocket.connect((IP_Address, Port)) #Intial handshake call to set up connection
         self.connectionSocket = clientSocket
         self.dataPort = 10000
         self.buffer = 4096
@@ -75,17 +77,17 @@ class ClientHandler():
         if "150" in reply:
             dataConnection = self.EstablishConnection()
             dirList = dataConnection.recv(self.buffer)
-            print dirList
+            return dirList
         elif "550" in reply:
             raise DoesntExist(directory)
         else:
             raise LoginError
         
-    def STOR(self,fileAddress ,fileName): 
-        self.connectionSocket.send("STOR " + fileName)
+    def STOR(self,fileAddress): 
+        self.connectionSocket.send("STOR " + fileAddress)
         reply = self.connectionSocket.recv(self.buffer)
         fileExists = False
-        
+        filename = ""
         if "150" in reply:
             for tempFileName in os.listdir(fileAddress + fileName):
                 if (tempFileName == fileName): 
@@ -129,5 +131,13 @@ class ClientHandler():
         dataSocket.listen(1) 
         recieveSocket, clientAddress = dataSocket.accept()
         return recieveSocket
+    
+    def Quit(self):
+        self.connectionSocket.send("QUIT")
+        reply = self.connectionSocket.recv(self.buffer)
+        if "221" in reply:
+            self.connectionSocket.close()
+        else:
+            raise QuitError
+            
 
-newC = ClientHandler("localhost", 3333)

@@ -1,6 +1,5 @@
 import Tkinter as tk
 import tkMessageBox
-from enum import Enum
 import Project_Client as cl
 
 class FTPGUI(tk.Tk):
@@ -33,7 +32,7 @@ class FTPGUI(tk.Tk):
         if self.hasClient == False:
             self.destroy()
         else:
-            #self.client.Quit()
+            self.client.Quit()
             self.destroy()
 
        
@@ -63,7 +62,7 @@ class ChooseServer(tk.Frame):
         server = self.serverEntry.get()
         port = self.portEntry.get()
         try:
-            #self.controllerWindow.client = cl.ClientHandler(server, port)
+            self.controllerWindow.client = cl.ClientHandler(server, port)
             self.controllerWindow.hasClient = True
             self.controllerWindow.DisplayPage("Login")
         except:
@@ -99,7 +98,7 @@ class Login(tk.Frame):
         username = self.usernameEntry.get()
         password = self.passwordEntry.get()
         try:
-            #self.controllerWindow.client.Login(username, password)
+            self.controllerWindow.client.Login(username, password)
             self.controllerWindow.DisplayPage("UploadDownload")
         except cl.LoginError:
             tkMessageBox.showinfo("Login Error", "The Login Details you entered were incorrect")
@@ -156,20 +155,29 @@ class Download(tk.Frame):
         backButton.grid(row = 4, column = 0,columnspan = 4, pady = 10)
         
     def GetFileList(self):
-        fileList = {0,1,3,2,4,5,6,7,8,9,10,11}
-        return sorted(fileList)
+        try:
+            fileList = self.controllerWindow.client.List(None)
+            return sorted(fileList)
+        except cl.DoesntExist:
+            tkMessageBox.showinfo("Directory Error", "The Directory you tried to list does not exist on the server.")
+            self.controllerWindow.DisplayPage("UploadDownload")
+        except cl.LoginError:
+            tkMessageBox.showinfo("Login Error", "You are not logged in.")
+            self.controllerWindow.DisplayPage("Login")
+            
+      
     
     def Download(self):
         try:
             filename = self.downloadList.get(self.downloadList.curselection()[0])
             downloadPath = self.downloadPathEntry.get()
             try:
-                #self.controllerWindow.client.RETR(downloadPath,filename)
+                self.controllerWindow.client.RETR(downloadPath,filename)
                 tkMessageBox.showinfo("File Transfer in Progress", "The file you requested is being downloaded now. Please wait for it to finish before you continue.")
             except cl.BadConnection:
                 tkMessageBox.showinfo("Connection Error", "There was an error with the data connection transfer. Please try again later")
                 self.controllerWindow.DisplayPage("Download")
-            except cl.FileDoesntExist as fde:
+            except cl.DoesntExist as fde:
                 tkMessageBox.showinfo("File Error", "The file: " + fde.fileName + " does not exist at the server")
                 self.controllerWindow.DisplayPage("Download")
         except IndexError:
@@ -186,7 +194,7 @@ class Upload(tk.Frame):
         
         self.uploadEntry = tk.Entry(self)
         self.uploadEntry.grid(row = 1,padx = 10,pady = 10)
-        
+              
         uploadButton = tk.Button(self, text = "Upload", command = lambda:self.Upload())
         uploadButton.grid(row = 2, padx = 20, pady = 10)
         
@@ -195,8 +203,18 @@ class Upload(tk.Frame):
         
     def Upload(self):
         uploadPath = self.uploadEntry.get()
-        print uploadPath
-    
+        try:
+            self.controllerWindow.client.STOR(uploadPath)
+            self.controllerWindow.DisplayPage("UploadDownload")
+        except cl.DoesntExist:
+            tkMessageBox.showinfo("File Error", "The file you tried to send did not have the correct path or doesn't exist")
+            self.controllerWindow.DisplayPage("Upload")
+        except cl.AccessDenied:
+            tkMessageBox.showinfo("Access Denied", "The server denied access to the transfer")
+            self.controllerWindow.DisplayPage("Upload")
+        except cl.LoginError:
+            tkMessageBox.showinfo("Login Error", "You are not logged in.")
+            self.controllerWindow.DisplayPage("Login")
         
 FTPGUI = FTPGUI()
 FTPGUI.mainloop()

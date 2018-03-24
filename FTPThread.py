@@ -22,7 +22,7 @@ class FTPThread(threading.Thread):
             self.input = self.connectionSocket.recv(1024)
             self.CommandResolve(self.input)
             
-        self.SendReply(226)
+        self.SendReply(221)
         print("Closed Thread")
             
     def CheckUserName(self,username):

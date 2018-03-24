@@ -1,5 +1,4 @@
 from socket import *
-import os
 from FTPThread import FTPThread
 
 publicSocket = socket(AF_INET, SOCK_STREAM)
