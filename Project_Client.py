@@ -39,8 +39,8 @@ class ClientHandler():
         reply = self.connectionSocket.recv(self.buffer)
         
         if "150" in reply:
-            recieveSocket = self.EstablishConnection()
-            downloadData = recieveSocket.recv(self.buffer)
+            self.EstablishConnection()
+            downloadData = self.recieveSocket.recv(self.buffer)
             localFile = open("./Downloads/" + fileName, "wb")
             while downloadData:
                 localFile.write(downloadData)
@@ -84,8 +84,9 @@ class ClientHandler():
             self.connectionSocket.send("LIST")
         reply = self.connectionSocket.recv(self.buffer)
         if "150" in reply:
-            dataConnection = self.EstablishConnection()
-            dirList = dataConnection.recv(self.buffer)
+            self.EstablishConnection()
+            dirList = self.receiveSocket.recv(self.buffer)
+            print dirList
             return dirList
         elif "550" in reply:
             raise DoesntExist(directory)
@@ -103,14 +104,14 @@ class ClientHandler():
             for tempFileName in os.listdir(fileAddressOnly):
                 if (tempFileName == fileName): 
                     fileExists = True
-                    dataSocket = self.EstablishConnection()
+                    self.EstablishConnection()
                     break
     
             if fileExists:
                 localFile = open(fileAddress,"rb")
                 uploadData = localFile.read(self.buffer)
                 while uploadData:
-                    dataSocket.send(uploadData)
+                    self.recieveSocket.send(uploadData)
                     uploadData= localFile.read(self.buffer)
                 localFile.close()
             else:
@@ -128,7 +129,7 @@ class ClientHandler():
         dataSocket.bind(('', self.dataPort))
         dataSocket.listen(1) 
         recieveSocket, clientAddress = dataSocket.accept()
-        return recieveSocket
+        self.receiveSocket = recieveSocket
     
     def Quit(self):
         self.connectionSocket.send("QUIT")

@@ -65,17 +65,17 @@ class FTPThread(threading.Thread):
                 if (tempFileName == fileName): 
                     fileExists = True
                     self.SendReply(150)
-                    dataSocket = self.CreateDataConnection()
+                    self.CreateDataConnection()
                     break
     
             if fileExists:
                 localFile = open(self.userFolder + fileName,"rb")
                 uploadData = localFile.read(self.buffer)
                 while uploadData:
-                    dataSocket.send(uploadData)
+                    self.dataSocket.send(uploadData)
                     uploadData= localFile.read(self.buffer)
                 localFile.close()
-                dataSocket.close()
+                self.dataSocket.close()
                 self.SendReply(226)
             else:
                 self.SendReply(550)
@@ -94,9 +94,9 @@ class FTPThread(threading.Thread):
                 dirList = os.listdir(self.userFolder + directory)
                 sendString = ", ".join(dirList)
                 print sendString
-                dataConnection = self.CreateDataConnection()
-                dataConnection.send(sendString)
-                dataConnection.close()
+                self.CreateDataConnection()
+                self.dataSocket.send(sendString)
+                self.dataSocket.close()
             else:
                 self.SendReply(550)
         else:
@@ -105,15 +105,15 @@ class FTPThread(threading.Thread):
     def Store(self, fileName):
         if self.loggedIn:
             self.SendReply(150)
-            dataSocket = self.CreateDataConnection()
-            downloadData = dataSocket.recv(self.buffer)
+            self.CreateDataConnection()
+            downloadData = self.dataSocket.recv(self.buffer)
             localFile = open(self.userFolder + fileName, "wb")
             while downloadData:
                 localFile.write(downloadData)
-                downloadData = dataSocket.recv(self.buffer)
+                downloadData = self.dataSocket.recv(self.buffer)
             self.SendReply(226)
             localFile.close()
-            dataSocket.close()
+            self.dataSocket.close()
             print downloadData
             #No idea why it would send an access denied
         else:
@@ -174,6 +174,5 @@ class FTPThread(threading.Thread):
         self.connectionSocket.send(message)
 
     def CreateDataConnection(self):
-        dataSocket = socket(AF_INET, SOCK_STREAM) #Set IPv4 and TCP
-        dataSocket.connect((self.dataIPAddress, self.dataportNumber))
-        return dataSocket
+        self.dataSocket = socket(AF_INET, SOCK_STREAM) #Set IPv4 and TCP
+        self.dataSocket.connect((self.dataIPAddress, self.dataportNumber))

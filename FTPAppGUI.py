@@ -63,8 +63,6 @@ class ChooseServer(tk.Frame):
     def Connect(self):
         server = self.serverEntry.get()
         port = self.portEntry.get()
-        print server
-        print port
         try:
             self.controllerWindow.client = cl.ClientHandler(server, int(port))
             self.controllerWindow.hasClient = True
