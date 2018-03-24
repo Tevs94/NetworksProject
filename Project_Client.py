@@ -1,6 +1,9 @@
 from socket import *
 import os
 
+class ServerNotResponding(Exception):
+    pass
+
 class LoginError(Exception):
     pass
 
@@ -21,12 +24,15 @@ class QuitError(Exception):
 
 class ClientHandler():
     def __init__(self, IP_Address, Port):
-        clientSocket = socket(AF_INET, SOCK_STREAM) #Set IPv4 and TCP
-        clientSocket.connect((IP_Address, Port)) #Intial handshake call to set up connection
-        self.connectionSocket = clientSocket
+        self.connectionSocket = socket(AF_INET, SOCK_STREAM) #Set IPv4 and TCP
+        self.connectionSocket.connect((IP_Address, Port)) #Intial handshake call to set up connection
         self.dataPort = 10000
         self.buffer = 4096
         self.parameter = ""
+        reply = self.connectionSocket.recv(self.buffer)
+        if "220" not in reply:
+            raise ServerNotResponding
+              
         
     def RETR(self,fileAddress ,fileName): #still needs to replace download with file address
         self.connectionSocket.send("RETR " + fileName)
@@ -137,7 +143,7 @@ class ClientHandler():
         reply = self.connectionSocket.recv(self.buffer)
         if "221" in reply:
             self.connectionSocket.close()
-        else:
-            raise QuitError
+        #else:
+          #  raise QuitError
             
 

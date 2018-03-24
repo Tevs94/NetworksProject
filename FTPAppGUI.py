@@ -61,11 +61,13 @@ class ChooseServer(tk.Frame):
     def Connect(self):
         server = self.serverEntry.get()
         port = self.portEntry.get()
+        print server
+        print port
         try:
-            self.controllerWindow.client = cl.ClientHandler(server, port)
+            self.controllerWindow.client = cl.ClientHandler(server, int(port))
             self.controllerWindow.hasClient = True
             self.controllerWindow.DisplayPage("Login")
-        except:
+        except cl.ServerNotResponding:
             tkMessageBox.showinfo("Connection Error", "The server you tried to connect to did not respond or denied you request")
             self.controllerWindow.DisplayPage("ChooseServer")
             
@@ -156,7 +158,9 @@ class Download(tk.Frame):
         
     def GetFileList(self):
         try:
-            fileList = self.controllerWindow.client.List(None)
+            #fileList = self.controllerWindow.client.List(None)
+            print "Tried to get list"
+            fileList = [1,2]
             return sorted(fileList)
         except cl.DoesntExist:
             tkMessageBox.showinfo("Directory Error", "The Directory you tried to list does not exist on the server.")
@@ -164,6 +168,7 @@ class Download(tk.Frame):
         except cl.LoginError:
             tkMessageBox.showinfo("Login Error", "You are not logged in.")
             self.controllerWindow.DisplayPage("Login")
+        return sorted([1,2])
             
       
     
