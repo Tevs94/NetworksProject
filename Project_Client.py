@@ -44,7 +44,7 @@ class ClientHandler():
             localFile = open("./Downloads/" + fileName, "wb")
             while downloadData:
                 localFile.write(downloadData)
-                downloadData = recieveSocket.recv(self.buffer)
+                downloadData = self.recieveSocket.recv(self.buffer)
             reply = self.connectionSocket.recv(self.buffer)
             localFile.close()
             print downloadData
@@ -85,7 +85,7 @@ class ClientHandler():
         reply = self.connectionSocket.recv(self.buffer)
         if "150" in reply:
             self.EstablishConnection()
-            dirList = self.receiveSocket.recv(self.buffer)
+            dirList = self.recieveSocket.recv(self.buffer)
             print dirList
             return dirList
         elif "550" in reply:
@@ -128,8 +128,7 @@ class ClientHandler():
         dataSocket = socket(AF_INET, SOCK_STREAM)
         dataSocket.bind(('', self.dataPort))
         dataSocket.listen(1) 
-        recieveSocket, clientAddress = dataSocket.accept()
-        self.receiveSocket = recieveSocket
+        self.recieveSocket, clientAddress = dataSocket.accept()
     
     def Quit(self):
         self.connectionSocket.send("QUIT")
