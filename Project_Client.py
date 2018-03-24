@@ -26,7 +26,7 @@ class ClientHandler():
     def __init__(self, IP_Address, Port):
         self.connectionSocket = socket(AF_INET, SOCK_STREAM) #Set IPv4 and TCP
         self.connectionSocket.connect((IP_Address, Port)) #Intial handshake call to set up connection
-        self.dataPort = 10000
+        self.dataPort = Port + 1
         self.buffer = 4096
         self.parameter = ""
         reply = self.connectionSocket.recv(self.buffer)
@@ -47,6 +47,7 @@ class ClientHandler():
                 downloadData = self.recieveSocket.recv(self.buffer)
             reply = self.connectionSocket.recv(self.buffer)
             localFile.close()
+            self.recieveSocket.close()
             print downloadData
         elif "550" in reply:
             raise DoesntExist(fileName)
@@ -87,6 +88,7 @@ class ClientHandler():
             self.EstablishConnection()
             dirList = self.recieveSocket.recv(self.buffer)
             print dirList
+            self.recieveSocket.close()
             return dirList
         elif "550" in reply:
             raise DoesntExist(directory)
@@ -114,6 +116,7 @@ class ClientHandler():
                     self.recieveSocket.send(uploadData)
                     uploadData= localFile.read(self.buffer)
                 localFile.close()
+                self.recieveSocket.close()
             else:
                 raise DoesntExist(fileName)
         elif "550" in reply:
