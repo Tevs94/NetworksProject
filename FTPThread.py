@@ -75,6 +75,7 @@ class FTPThread(threading.Thread):
                     self.dataSocket.send(uploadData)
                     uploadData= localFile.read(self.buffer)
                 localFile.close()
+                self.dataSocket.close()
                 self.SendReply(226)
             else:
                 self.SendReply(550)
@@ -95,6 +96,7 @@ class FTPThread(threading.Thread):
                 print sendString
                 self.CreateDataConnection()
                 self.dataSocket.send(sendString)
+                self.dataSocket.close()
             else:
                 self.SendReply(550)
         else:
@@ -109,8 +111,11 @@ class FTPThread(threading.Thread):
             while downloadData:
                 localFile.write(downloadData)
                 downloadData = self.dataSocket.recv(self.buffer)
-            self.SendReply(226)
             localFile.close()
+            self.dataSocket.close()
+            self.SendReply(226)
+            
+            
             print downloadData
             #No idea why it would send an access denied
         else:

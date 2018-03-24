@@ -45,10 +45,10 @@ class ClientHandler():
             while downloadData:
                 localFile.write(downloadData)
                 downloadData = self.recieveSocket.recv(self.buffer)
-            reply = self.connectionSocket.recv(self.buffer)
+                print downloadData
             localFile.close()
-            self.recieveSocket.close()
-            print downloadData
+            reply = self.connectionSocket.recv(self.buffer)
+            print reply
         elif "550" in reply:
             raise DoesntExist(fileName)
         elif "530" in reply:
@@ -87,8 +87,6 @@ class ClientHandler():
         if "150" in reply:
             self.EstablishConnection()
             dirList = self.recieveSocket.recv(self.buffer)
-            print dirList
-            self.recieveSocket.close()
             return dirList
         elif "550" in reply:
             raise DoesntExist(directory)
@@ -116,7 +114,6 @@ class ClientHandler():
                     self.recieveSocket.send(uploadData)
                     uploadData= localFile.read(self.buffer)
                 localFile.close()
-                self.recieveSocket.close()
             else:
                 raise DoesntExist(fileName)
         elif "550" in reply:
