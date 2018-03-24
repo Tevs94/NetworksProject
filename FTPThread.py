@@ -88,7 +88,7 @@ class FTPThread(threading.Thread):
             if self.parameter is None:
                 directory = ""
             else:
-                directory = self.currentUsername
+                directory = self.parameter
             
             if(os.path.isdir('./Users/'+ directory)):
                 dirList = os.listdir('./Users/'+ directory)
