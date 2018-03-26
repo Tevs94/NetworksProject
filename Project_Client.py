@@ -30,7 +30,7 @@ class ClientHandler():
         self.connectionSocket = socket(AF_INET, SOCK_STREAM) #Set IPv4 and TCP
         self.connectionSocket.connect((IP_Address, Port)) #Intial handshake call to set up connection
         self.dataPort = Port - 1
-        self.buffer = 2048
+        self.buffer = 4096
         self.parameter = ""
         reply = self.connectionSocket.recv(self.buffer)
         print reply
@@ -42,21 +42,10 @@ class ClientHandler():
         self.CreatePassiveConnection()
         self.SendCommand("RETR " + fileName)
         reply = self.connectionSocket.recv(self.buffer)
-        
-        if "150" in reply:
+                
+        if reply[0]== "1":
             downloadData = self.dataSocket.recv(self.buffer)
-            localFile = open("./Downloads/" + fileName, "wb")
-            while downloadData:
-                localFile.write(downloadData)
-                downloadData = self.dataSocket.recv(self.buffer)
-                print downloadData
-            localFile.close()
-            reply = self.connectionSocket.recv(self.buffer)
-            print reply
-            
-        elif "125" in reply:
-            downloadData = self.dataSocket.recv(self.buffer)
-            localFile = open("./Downloads/" + fileName, "wb")
+            localFile = open(fileAddress + "\\" + fileName, "wb")
             while downloadData:
                 localFile.write(downloadData)
                 downloadData = self.dataSocket.recv(self.buffer)
@@ -94,14 +83,13 @@ class ClientHandler():
             raise PortChangeFailed
             
     def List(self, directory): #needs to default to None as per RFC
-        self.CreatePassiveConnection()
         if directory is not None:
-            self.SendCommand("NLST " + directory)
+            self.SendCommand("LIST " + directory)
         else:
-            self.SendCommand("NLST")
+            self.SendCommand("LIST")
         reply = self.connectionSocket.recv(self.buffer)
         if reply[0]== "1":
-            #self.EstablishConnection()
+            self.CreatePassiveConnection()
             dirList = self.dataSocket.recv(self.buffer)
             return dirList
         elif "550" in reply:
@@ -109,6 +97,21 @@ class ClientHandler():
         else:
             raise ResponseNotHandled(reply[0]+reply[1]+reply[2])
         
+    def NList(self, directory): #needs to default to None as per RFC
+        self.CreatePassiveConnection()
+        if directory is not None:
+            self.SendCommand("NLST " + directory)
+        else:
+            self.SendCommand("NLST")
+        reply = self.connectionSocket.recv(self.buffer)
+        if reply[0]== "1":
+            dirList = self.dataSocket.recv(self.buffer)
+            return dirList
+        elif "550" in reply:
+            raise DoesntExist(directory)
+        else:
+            raise ResponseNotHandled(reply[0]+reply[1]+reply[2])
+    
     def STOR(self,fileAddress): 
         AddressParts = fileAddress.split("\\")
         fileName = AddressParts[-1]
@@ -117,7 +120,8 @@ class ClientHandler():
         reply = self.connectionSocket.recv(self.buffer)
         fileExists = False
         fileAddressOnly = fileAddress.replace(fileName,"")
-        if "150" in reply:
+        
+        if reply[0]== "1":
             for tempFileName in os.listdir(fileAddressOnly):
                 if (tempFileName == fileName): 
                     fileExists = True
@@ -142,12 +146,6 @@ class ClientHandler():
     def SendCommand(self,message) :
         self.connectionSocket.send(message + "\r\n")
         
-    def EstablishConnection(self):
-        dataSocket = socket(AF_INET, SOCK_STREAM)
-        dataSocket.bind(('', self.dataPort))
-        dataSocket.listen(1) 
-        self.recieveSocket, clientAddress = dataSocket.accept()
-        
     def CreatePassiveConnection(self):
         self.SendCommand("PASV")
         reply = self.connectionSocket.recv(self.buffer)
@@ -157,7 +155,9 @@ class ClientHandler():
         reply[len(reply)-1] = reply[len(reply)-1].split(")")[0]
         print reply
         self.dataIpAddress = reply[0]+"." + reply[1] + "." + reply[2]+ "." + reply[3]
+        print self.dataIpAddress
         self.dataPort = int(reply[4])*256 + int(reply[5])
+        print self.dataPort
         self.dataSocket = socket(AF_INET, SOCK_STREAM)
         self.dataSocket.connect((self.dataIpAddress, self.dataPort))
         

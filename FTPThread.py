@@ -1,6 +1,7 @@
 import threading
 import os
 from socket import *
+import random
 
 class FTPThread(threading.Thread):
     def __init__(self,threadID,connectionSocket, portNum, clientAddress):
@@ -56,7 +57,19 @@ class FTPThread(threading.Thread):
         self.dataportNumber = (int(values[4]) * 256) + int(values[5])
         self.dataIPAddress = values[0] + '.' + values[1] + '.' + values[2] + '.' + values[3]
         self.SendReply(200)
-
+        
+    def Passive(self):
+        p1 = random.randint(0, 256)
+        p2 = random.randint(0, 256)
+        self.dataportNumber = (p1 * 256) + p2
+        print self.dataportNumber
+        #IPAddress = gethostbyname(gethostname())
+        #IPString = IPAddress.replace(".", ",")
+        IPString = "127,0,0,1"
+        fullString = IPString + ',' + str(p1) + ',' + str(p2)
+        self.connectionSocket.send("200 Passive mode activated (" + fullString + ")") #To add needed passive details ignoring sendreplyes
+        self.CreateDataConnection()
+        
     def Retrieve(self,fileName):
         if self.loggedIn:
             fileExists = False
@@ -64,7 +77,7 @@ class FTPThread(threading.Thread):
             for tempFileName in os.listdir(self.userFolder):
                 if (tempFileName == fileName): 
                     fileExists = True
-                    self.SendReply(150)
+                    self.SendReply(125)
                     self.CreateDataConnection()
                     break
     
@@ -84,7 +97,28 @@ class FTPThread(threading.Thread):
     
     def List(self):
         if self.loggedIn:
-            self.SendReply(150)
+            self.SendReply(125)
+            if self.parameter is None:
+                directory = ""
+            else:
+                directory = self.parameter
+            
+            if(os.path.isdir(self.userFolder + directory)):
+                dirList = os.listdir(self.userFolder + directory)
+                tempString = self.userFolder + ", "
+                sendString = tempString.join(dirList)
+                print sendString
+                self.CreateDataConnection()
+                self.dataSocket.send(sendString)
+                self.dataSocket.close()
+            else:
+                self.SendReply(550)
+        else:
+            self.SendReply(530)  
+            
+    def NList(self):
+        if self.loggedIn:
+            self.SendReply(125)
             if self.parameter is None:
                 directory = ""
             else:
@@ -104,7 +138,7 @@ class FTPThread(threading.Thread):
               
     def Store(self, fileName):
         if self.loggedIn:
-            self.SendReply(150)
+            self.SendReply(125)
             self.CreateDataConnection()
             downloadData = self.dataSocket.recv(self.buffer)
             localFile = open(self.userFolder + fileName, "wb")
@@ -132,7 +166,9 @@ class FTPThread(threading.Thread):
             "USER": lambda self: self.CheckUserName(self.parameter),
             "PASS": lambda self: self.CheckPassword(self.parameter),
             "PORT": lambda self: self.Port(self.parameter),
+            "PASV": lambda self: self.Passive(),
             "LIST": lambda self: self.List(),
+            "NLST": lambda self: self.NList(),
             "RETR": lambda self: self.Retrieve(self.parameter),
             "STOR": lambda self: self.Store(self.parameter),
             "NOOP": lambda self: self.OkServer(),
@@ -177,5 +213,7 @@ class FTPThread(threading.Thread):
         self.connectionSocket.send(message)
 
     def CreateDataConnection(self):
-        self.dataSocket = socket(AF_INET, SOCK_STREAM) #Set IPv4 and TCP
-        self.dataSocket.connect((self.dataIPAddress, self.dataportNumber))
+        dataSocket = socket(AF_INET, SOCK_STREAM)
+        dataSocket.bind(('', self.dataportNumber))
+        dataSocket.listen(1) 
+        self.dataSocket, clientAddress = dataSocket.accept()

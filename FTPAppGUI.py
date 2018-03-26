@@ -165,7 +165,7 @@ class Download(tk.Frame):
         
     def PopulateFileList(self):
         try:
-            self.fileList = self.controllerWindow.client.List(None)
+            self.fileList = self.controllerWindow.client.NList(None)
             self.downloadList.configure(state="normal")
             self.downloadList.delete(1.0,tk.END)
             self.downloadList.insert(tk.END,self.fileList)
