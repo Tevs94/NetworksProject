@@ -177,9 +177,7 @@ class FTPThread(threading.Thread):
      
     def CommandResolve(self,commandString):
         commandString = commandString.split("\r\n")
-        print commandString
         command = commandString[0].split()
-        print command
         commandCode = command[0]
         if command.__len__() == 1:
             commandParameter = None
@@ -187,7 +185,6 @@ class FTPThread(threading.Thread):
             commandParameter = command[1]
         try:
             self.parameter = commandParameter
-            print self.parameter
             self.commands.get(commandCode)(self)
         except (KeyError, TypeError) as e:
             self.SendReply(500)

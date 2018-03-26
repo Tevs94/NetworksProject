@@ -153,11 +153,8 @@ class ClientHandler():
         if reply[0].__len__() > 3:
             reply[0]= reply[0].split("(")[1]
         reply[len(reply)-1] = reply[len(reply)-1].split(")")[0]
-        print reply
         self.dataIpAddress = reply[0]+"." + reply[1] + "." + reply[2]+ "." + reply[3]
-        print self.dataIpAddress
         self.dataPort = int(reply[4])*256 + int(reply[5])
-        print self.dataPort
         self.dataSocket = socket(AF_INET, SOCK_STREAM)
         self.dataSocket.connect((self.dataIpAddress, self.dataPort))
         
