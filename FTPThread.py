@@ -62,10 +62,8 @@ class FTPThread(threading.Thread):
         p1 = random.randint(0, 256)
         p2 = random.randint(0, 256)
         self.dataportNumber = (p1 * 256) + p2
-        print self.dataportNumber
-        #IPAddress = gethostbyname(gethostname())
-        #IPString = IPAddress.replace(".", ",")
-        IPString = "127,0,0,1"
+        IPAddress = gethostbyname(gethostname())
+        IPString = IPAddress.replace(".", ",")
         fullString = IPString + ',' + str(p1) + ',' + str(p2)
         self.connectionSocket.send("200 Passive mode activated (" + fullString + ")") #To add needed passive details ignoring sendreplyes
         self.CreateDataConnection()
@@ -78,7 +76,6 @@ class FTPThread(threading.Thread):
                 if (tempFileName == fileName): 
                     fileExists = True
                     self.SendReply(125)
-                    self.CreateDataConnection()
                     break
     
             if fileExists:
@@ -88,12 +85,12 @@ class FTPThread(threading.Thread):
                     self.dataSocket.send(uploadData)
                     uploadData= localFile.read(self.buffer)
                 localFile.close()
-                self.dataSocket.close()
                 self.SendReply(226)
             else:
                 self.SendReply(550)
         else:
             self.SendReply(530)  
+        self.dataSocket.close()
     
     def List(self):
         if self.loggedIn:
@@ -107,14 +104,12 @@ class FTPThread(threading.Thread):
                 dirList = os.listdir(self.userFolder + directory)
                 tempString = self.userFolder + ", "
                 sendString = tempString.join(dirList)
-                print sendString
-                self.CreateDataConnection()
                 self.dataSocket.send(sendString)
-                self.dataSocket.close()
             else:
                 self.SendReply(550)
         else:
             self.SendReply(530)  
+        self.dataSocket.close()
             
     def NList(self):
         if self.loggedIn:
@@ -127,7 +122,6 @@ class FTPThread(threading.Thread):
             if(os.path.isdir(self.userFolder + directory)):
                 dirList = os.listdir(self.userFolder + directory)
                 sendString = ", ".join(dirList)
-                print sendString
                 self.dataSocket.send(sendString)
             else:
                 self.SendReply(550)

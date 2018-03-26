@@ -42,17 +42,19 @@ class ClientHandler():
         self.CreatePassiveConnection()
         self.SendCommand("RETR " + fileName)
         reply = self.connectionSocket.recv(self.buffer)
-                
+        if(fileAddress == ""):
+            fileLocation = ""
+        else:
+            fileLocation = fileAddress + "\\"
+        
         if reply[0]== "1":
             downloadData = self.dataSocket.recv(self.buffer)
-            localFile = open(fileAddress + "\\" + fileName, "wb")
+            localFile = open(fileLocation + fileName, "wb")
             while downloadData:
                 localFile.write(downloadData)
                 downloadData = self.dataSocket.recv(self.buffer)
-                print downloadData
             localFile.close()
             reply = self.connectionSocket.recv(self.buffer)
-            print reply
         elif "550" in reply:
             raise DoesntExist(fileName)
         elif "530" in reply:
@@ -83,13 +85,13 @@ class ClientHandler():
             raise PortChangeFailed
             
     def List(self, directory): #needs to default to None as per RFC
+        self.CreatePassiveConnection()
         if directory is not None:
             self.SendCommand("LIST " + directory)
         else:
             self.SendCommand("LIST")
         reply = self.connectionSocket.recv(self.buffer)
         if reply[0]== "1":
-            self.CreatePassiveConnection()
             dirList = self.dataSocket.recv(self.buffer)
             return dirList
         elif "550" in reply:
