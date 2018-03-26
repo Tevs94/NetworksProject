@@ -128,13 +128,12 @@ class FTPThread(threading.Thread):
                 dirList = os.listdir(self.userFolder + directory)
                 sendString = ", ".join(dirList)
                 print sendString
-                #self.CreateDataConnection()
                 self.dataSocket.send(sendString)
-                #self.dataSocket.close()
             else:
                 self.SendReply(550)
         else:
-            self.SendReply(530)  
+            self.SendReply(530)
+        self.dataSocket.close()
               
     def Store(self, fileName):
         if self.loggedIn:
