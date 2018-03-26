@@ -68,6 +68,7 @@ class FTPThread(threading.Thread):
         IPString = "127,0,0,1"
         fullString = IPString + ',' + str(p1) + ',' + str(p2)
         self.connectionSocket.send("200 Passive mode activated (" + fullString + ")") #To add needed passive details ignoring sendreplyes
+        self.CreateDataConnection()
         
     def Retrieve(self,fileName):
         if self.loggedIn:
@@ -116,7 +117,6 @@ class FTPThread(threading.Thread):
             self.SendReply(530)  
             
     def NList(self):
-        self.CreateDataConnection()
         if self.loggedIn:
             self.SendReply(125)
             if self.parameter is None:
@@ -130,7 +130,7 @@ class FTPThread(threading.Thread):
                 print sendString
                 #self.CreateDataConnection()
                 self.dataSocket.send(sendString)
-                self.dataSocket.close()
+                #self.dataSocket.close()
             else:
                 self.SendReply(550)
         else:
