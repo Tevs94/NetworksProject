@@ -22,8 +22,13 @@ class PortChangeFailed(Exception):
 
 class AccessDenied(Exception):
     pass
+
 class QuitError(Exception):
     pass
+
+class InCorrectLocation(Exception):
+    pass
+
 
 class ClientHandler():
     def __init__(self, IP_Address, Port):
@@ -115,6 +120,9 @@ class ClientHandler():
             raise ResponseNotHandled(reply[0]+reply[1]+reply[2])
     
     def STOR(self,fileAddress): 
+        if(fileAddress == ""):
+            raise InCorrectLocation
+            
         AddressParts = fileAddress.split("\\")
         fileName = AddressParts[-1]
         self.CreatePassiveConnection()
