@@ -68,7 +68,6 @@ class FTPThread(threading.Thread):
         IPString = "127,0,0,1"
         fullString = IPString + ',' + str(p1) + ',' + str(p2)
         self.connectionSocket.send("200 Passive mode activated (" + fullString + ")") #To add needed passive details ignoring sendreplyes
-        self.CreateDataConnection()
         
     def Retrieve(self,fileName):
         if self.loggedIn:
@@ -117,6 +116,7 @@ class FTPThread(threading.Thread):
             self.SendReply(530)  
             
     def NList(self):
+        self.CreateDataConnection()
         if self.loggedIn:
             self.SendReply(125)
             if self.parameter is None:
@@ -128,7 +128,7 @@ class FTPThread(threading.Thread):
                 dirList = os.listdir(self.userFolder + directory)
                 sendString = ", ".join(dirList)
                 print sendString
-                self.CreateDataConnection()
+                #self.CreateDataConnection()
                 self.dataSocket.send(sendString)
                 self.dataSocket.close()
             else:
@@ -177,7 +177,9 @@ class FTPThread(threading.Thread):
      
     def CommandResolve(self,commandString):
         commandString = commandString.split("\r\n")
+        print commandString
         command = commandString[0].split()
+        print command
         commandCode = command[0]
         if command.__len__() == 1:
             commandParameter = None
@@ -185,6 +187,7 @@ class FTPThread(threading.Thread):
             commandParameter = command[1]
         try:
             self.parameter = commandParameter
+            print self.parameter
             self.commands.get(commandCode)(self)
         except (KeyError, TypeError) as e:
             self.SendReply(500)
@@ -192,6 +195,7 @@ class FTPThread(threading.Thread):
         
             
     replies = {
+            125: "125 Data connection already open; transfer starting.",
             150: "150 File status okay; about to open data connection.",
             200: "200 Command okay.",
             202: "202 Command not implemented, superfluous at this site.",
