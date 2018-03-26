@@ -6,7 +6,7 @@ class FTPThread(threading.Thread):
     def __init__(self,threadID,connectionSocket, portNum, clientAddress):
         threading.Thread.__init__(self)
         self.threadID = threadID
-        self.dataportNumber = portNum + 1
+        self.dataportNumber = portNum - 1
         self.controlPort = clientAddress[1]
         self.clientIPAddress = clientAddress[0]
         self.dataIPAddress = self.clientIPAddress
@@ -140,7 +140,8 @@ class FTPThread(threading.Thread):
             }
      
     def CommandResolve(self,commandString):
-        command = commandString.split()
+        commandString = commandString.split("\r\n")
+        command = commandString[0].split()
         commandCode = command[0]
         if command.__len__() == 1:
             commandParameter = None

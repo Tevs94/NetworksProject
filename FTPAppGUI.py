@@ -176,25 +176,29 @@ class Download(tk.Frame):
         except cl.LoginError:
             tkMessageBox.showinfo("Login Error", "You are not logged in.")
             self.controllerWindow.DisplayPage("Login")
-        return sorted([1,2])
+        except cl.ResponseNotHandled as rnh:
+            print "here"
+            tkMessageBox.showinfo("Response Not Understood", "The server responded with a code that the application did not understand: "+rnh.response )
+            self.controllerWindow.DisplayPage("UploadDownload")
             
       
     
     def Download(self):
+        filename = self.fileNameEntry.get()
+        downloadPath = self.downloadPathEntry.get()
         try:
-            filename = self.fileNameEntry.get()
-            downloadPath = self.downloadPathEntry.get()
-            try:
-                self.controllerWindow.client.RETR(downloadPath,filename)
-                tkMessageBox.showinfo("File Transfer in Progress", "The file you requested is being downloaded now. Please wait for it to finish before you continue.")
-            except cl.BadConnection:
-                tkMessageBox.showinfo("Connection Error", "There was an error with the data connection transfer. Please try again later")
-                self.controllerWindow.DisplayPage("Download")
-            except cl.DoesntExist as fde:
-                tkMessageBox.showinfo("File Error", "The file: " + fde.fileName + " does not exist at the server")
-                self.controllerWindow.DisplayPage("Download")
-        except IndexError:
-            tkMessageBox.showinfo("Selection Error", "Please Select a File before clicking download.")
+            self.controllerWindow.client.RETR(downloadPath,filename)
+            tkMessageBox.showinfo("File Transfer in Progress", "The file you requested is being downloaded now. Please wait for it to finish before you continue.")
+        except cl.BadConnection:
+            tkMessageBox.showinfo("Connection Error", "There was an error with the data connection transfer. Please try again later")
+            self.controllerWindow.DisplayPage("Download")
+        except cl.DoesntExist as fde:
+            tkMessageBox.showinfo("File Error", "The file: " + fde.fileName + " does not exist at the server")
+            self.controllerWindow.DisplayPage("Download")
+        except cl.ResponseNotHandled as rnh:
+            tkMessageBox.showinfo("Response Not Understood", "The server responded with a code that the application did not understand: "+rnh.response )
+            self.controllerWindow.DisplayPage("Download")
+        
         
 class Upload(tk.Frame):
     def __init__(self, window,controllerWindow):
@@ -228,6 +232,9 @@ class Upload(tk.Frame):
         except cl.LoginError:
             tkMessageBox.showinfo("Login Error", "You are not logged in.")
             self.controllerWindow.DisplayPage("Login")
+        except cl.ResponseNotHandled as rnh:
+            tkMessageBox.showinfo("Response Not Understood", "The server responded with a code that the application did not understand: "+rnh.response )
+            self.controllerWindow.DisplayPage("Upload")
         
 FTPGUI = FTPGUI()
 FTPGUI.mainloop()
