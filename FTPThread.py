@@ -132,7 +132,6 @@ class FTPThread(threading.Thread):
     def Store(self, fileName):
         if self.loggedIn:
             self.SendReply(125)
-            self.CreateDataConnection()
             downloadData = self.dataSocket.recv(self.buffer)
             localFile = open(self.userFolder + fileName, "wb")
             while downloadData:
@@ -141,12 +140,9 @@ class FTPThread(threading.Thread):
             localFile.close()
             self.dataSocket.close()
             self.SendReply(226)
-            
-            
-            print downloadData
-            #No idea why it would send an access denied
         else:
             self.SendReply(530) 
+            self.dataSocket.close()
         
     def OkServer(self):
         print "OK Server"
