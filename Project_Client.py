@@ -29,6 +29,8 @@ class QuitError(Exception):
 class InCorrectLocation(Exception):
     pass
 
+class NoFileAddress(Exception):
+    pass
 
 class ClientHandler():
     def __init__(self, IP_Address, Port):
@@ -48,7 +50,7 @@ class ClientHandler():
         self.SendCommand("RETR " + fileName)
         reply = self.connectionSocket.recv(self.buffer)
         if(fileAddress == ""):
-            fileLocation = ""
+            raise InCorrectLocation
         else:
             fileLocation = fileAddress + "\\"
         
