@@ -138,8 +138,8 @@ class FTPThread(threading.Thread):
             while downloadData:
                 localFile.write(downloadData)
                 downloadData = self.dataSocket.recv(self.buffer)
-            self.SendReply(226)
             localFile.close()
+            self.SendReply(226)
             self.dataSocket.close()
             
         else:

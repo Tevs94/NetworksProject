@@ -153,9 +153,9 @@ class ClientHandler():
                 uploadData = localFile.read(self.buffer)
                 while uploadData:
                     self.dataSocket.send(uploadData)
-                    uploadData= localFile.read(self.buffer)
+                    uploadData = localFile.read(self.buffer)
+                self.dataSocket.close()
                 localFile.close()
-                print "finished uploading"
                 confirmation = self.connectionSocket.recv(self.buffer)
                 if confirmation[0]!="2":
                     raise ResponseNotHandled(confirmation[0]+confirmation[1]+confirmation[2])
