@@ -37,20 +37,19 @@ class FTPThread(threading.Thread):
                 self.currentUserPassword = nameAndPass[1]
                 self.SendReply(331)
                 userFound = True
-                print "User Found"
         if userFound == False:
             self.SendReply(530) 
-            print "User Not found"
+            
                 
     def CheckPassword(self,password):
         if password == self.currentUserPassword:
             self.SendReply(230)
             self.loggedIn = True
             self.userFolder = "./Users/" + self.currentUsername + "/"
-            print "Authenticated"
+           
         else:
             self.SendReply(530)
-            print "Incorrect Password"
+            
     
     def Port(self,port):
         values = port.split(',')
@@ -139,9 +138,10 @@ class FTPThread(threading.Thread):
             while downloadData:
                 localFile.write(downloadData)
                 downloadData = self.dataSocket.recv(self.buffer)
+            self.SendReply(226)
             localFile.close()
             self.dataSocket.close()
-            self.SendReply(226)
+            
         else:
             self.SendReply(530) 
             self.dataSocket.close()
@@ -177,9 +177,9 @@ class FTPThread(threading.Thread):
         try:
             self.parameter = commandParameter
             self.commands.get(commandCode)(self)
-        except (KeyError, TypeError) as e:
+        except (KeyError, TypeError):
             self.SendReply(500)
-            print e
+
         
             
     replies = {
