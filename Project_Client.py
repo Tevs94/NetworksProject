@@ -59,7 +59,9 @@ class ClientHandler():
                 localFile.write(downloadData)
                 downloadData = self.dataSocket.recv(self.buffer)
             localFile.close()
-            reply = self.connectionSocket.recv(self.buffer)
+            confirmation = self.connectionSocket.recv(self.buffer)
+            if confirmation[0]!="2":
+                raise ResponseNotHandled(confirmation[0]+confirmation[1]+confirmation[2])
         elif "550" in reply:
             raise DoesntExist(fileName)
         elif "530" in reply:
@@ -98,7 +100,11 @@ class ClientHandler():
         reply = self.connectionSocket.recv(self.buffer)
         if reply[0]== "1":
             dirList = self.dataSocket.recv(self.buffer)
-            return dirList
+            confirmation = self.connectionSocket.recv(self.buffer)
+            if confirmation[0]=="2":
+                return dirList
+            else:
+                raise ResponseNotHandled(confirmation[0]+confirmation[1]+confirmation[2])
         elif "550" in reply:
             raise DoesntExist(directory)
         else:
@@ -111,9 +117,14 @@ class ClientHandler():
         else:
             self.SendCommand("NLST")
         reply = self.connectionSocket.recv(self.buffer)
+        print reply
         if reply[0]== "1":
             dirList = self.dataSocket.recv(self.buffer)
-            return dirList
+            confirmation = self.connectionSocket.recv(self.buffer)
+            if confirmation[0]=="2":
+                return dirList
+            else:
+                raise ResponseNotHandled(confirmation[0]+confirmation[1]+confirmation[2])
         elif "550" in reply:
             raise DoesntExist(directory)
         else:
@@ -123,35 +134,40 @@ class ClientHandler():
         if(fileAddress == ""):
             raise InCorrectLocation
             
+        fileExists = False
         AddressParts = fileAddress.split("\\")
         fileName = AddressParts[-1]
-        self.CreatePassiveConnection()
-        self.SendCommand("STOR " + fileName)
-        reply = self.connectionSocket.recv(self.buffer)
-        fileExists = False
         fileAddressOnly = fileAddress.replace(fileName,"")
         
-        if reply[0]== "1":
-            for tempFileName in os.listdir(fileAddressOnly):
-                if (tempFileName == fileName): 
-                    fileExists = True
-                    break
+        for tempFileName in os.listdir(fileAddressOnly):
+            if (tempFileName == fileName): 
+                fileExists = True
+                break
     
-            if fileExists:
+        if fileExists:
+            self.CreatePassiveConnection()
+            self.SendCommand("STOR " + fileName)
+            reply = self.connectionSocket.recv(self.buffer)
+            if reply[0] == "1":    
                 localFile = open(fileAddress,"rb")
                 uploadData = localFile.read(self.buffer)
                 while uploadData:
                     self.dataSocket.send(uploadData)
                     uploadData= localFile.read(self.buffer)
                 localFile.close()
+                confirmation = self.connectionSocket.recv(self.buffer)
+                if confirmation[0]!="2":
+                    raise ResponseNotHandled(confirmation[0]+confirmation[1]+confirmation[2])
+            elif "550" in reply:
+                raise AccessDenied
+            elif "530" in reply:
+                raise LoginError
             else:
-                raise DoesntExist(fileName)
-        elif "550" in reply:
-            raise AccessDenied
-        elif "530" in reply:
-            raise LoginError
+                raise ResponseNotHandled(reply[0]+reply[1]+reply[2])   
         else:
-            raise ResponseNotHandled(reply[0]+reply[1]+reply[2])
+            raise DoesntExist(fileName)
+                 
+        
 
     def SendCommand(self,message) :
         self.connectionSocket.send(message + "\r\n")
@@ -159,14 +175,17 @@ class ClientHandler():
     def CreatePassiveConnection(self):
         self.SendCommand("PASV")
         reply = self.connectionSocket.recv(self.buffer)
-        reply = reply.split(",")
-        if reply[0].__len__() > 3:
-            reply[0]= reply[0].split("(")[1]
-        reply[len(reply)-1] = reply[len(reply)-1].split(")")[0]
-        self.dataIpAddress = reply[0]+"." + reply[1] + "." + reply[2]+ "." + reply[3]
-        self.dataPort = int(reply[4])*256 + int(reply[5])
-        self.dataSocket = socket(AF_INET, SOCK_STREAM)
-        self.dataSocket.connect((self.dataIpAddress, self.dataPort))
+        if "227"in reply:
+            reply = reply.split(",")
+            if reply[0].__len__() > 3:
+                reply[0]= reply[0].split("(")[1]
+            reply[len(reply)-1] = reply[len(reply)-1].split(")")[0]
+            self.dataIpAddress = reply[0]+"." + reply[1] + "." + reply[2]+ "." + reply[3]
+            self.dataPort = int(reply[4])*256 + int(reply[5])
+            self.dataSocket = socket(AF_INET, SOCK_STREAM)
+            self.dataSocket.connect((self.dataIpAddress, self.dataPort))
+        else:
+             raise ResponseNotHandled(reply[0]+reply[1]+reply[2])
         
     def Quit(self):
         self.SendCommand("QUIT")

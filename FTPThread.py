@@ -65,7 +65,7 @@ class FTPThread(threading.Thread):
         IPAddress = gethostbyname(gethostname())
         IPString = IPAddress.replace(".", ",")
         fullString = IPString + ',' + str(p1) + ',' + str(p2)
-        self.connectionSocket.send("200 Passive mode activated (" + fullString + ")") #To add needed passive details ignoring sendreplyes
+        self.connectionSocket.send("227 Passive mode activated (" + fullString + ")") #To add needed passive details ignoring sendreplyes
         self.CreateDataConnection()
         
     def Retrieve(self,fileName):
@@ -110,6 +110,7 @@ class FTPThread(threading.Thread):
         else:
             self.SendReply(530)  
         self.dataSocket.close()
+        self.SendReply(226)
             
     def NList(self):
         if self.loggedIn:
@@ -128,6 +129,7 @@ class FTPThread(threading.Thread):
         else:
             self.SendReply(530)
         self.dataSocket.close()
+        self.SendReply(226)
               
     def Store(self, fileName):
         if self.loggedIn:

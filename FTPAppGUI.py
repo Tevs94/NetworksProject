@@ -177,7 +177,6 @@ class Download(tk.Frame):
             tkMessageBox.showinfo("Login Error", "You are not logged in.")
             self.controllerWindow.DisplayPage("Login")
         except cl.ResponseNotHandled as rnh:
-            print "here"
             tkMessageBox.showinfo("Response Not Understood", "The server responded with a code that the application did not understand: "+rnh.response )
             self.controllerWindow.DisplayPage("UploadDownload")
             
