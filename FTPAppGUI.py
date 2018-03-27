@@ -26,7 +26,7 @@ class FTPGUI(tk.Tk):
             frame.grid_remove()
             
         frame = self.frames[pageName]
-        if pageName == "Download":
+        if pageName == "Download" or pageName == "Upload":
             self.frames[pageName].PopulateFileList()
         frame.grid()
         
@@ -131,12 +131,17 @@ class Download(tk.Frame):
         self.downloadLabel = tk.Label(self,text = "Select a file to download and the path to download to")
         self.downloadLabel.grid(row = 0,padx = 30,pady = 10, columnspan = 2)
         
-        self.listLabel = tk.Label(self,text = "The server responded with this list of files:")
+        self.listLabel = tk.Label(self,text = "Instructions: The server responded with this list of files in the current directory. \n Double click on a folder to enter it, double click on a file to copy it to the download text field below")
         self.listLabel.grid(row = 1,padx = 30,pady = 10, columnspan = 2)
         
-        self.downloadList = tk.Text(self, height = 10, width = 30)
-        self.downloadList.grid(row = 2, column = 0,columnspan = 2, padx = 10, pady = 10)
-        self.downloadList.configure(state="disabled")
+        self.parentDirButton = tk.Button(self,text = "Go to Parent Directory",
+                                         command = lambda:self.ParentDirectory())
+        self.parentDirButton.grid(row = 2,padx = 30,pady = 2, columnspan = 2)
+        
+        self.downloadList = tk.Listbox(self, height = 10, width = 50)
+        self.downloadList.bind('<Double-Button-1>', self.DownloadListDblClk)
+        self.downloadList.grid(row = 3, column = 0,columnspan = 2, padx = 10, pady = 10)
+        
         
         if self.controllerWindow.hasClient:
             
@@ -146,30 +151,30 @@ class Download(tk.Frame):
             scrollbar.config(command=self.downloadList.yview)
             
         self.fileNameLabel = tk.Label(self, text = "File to Download:")
-        self.fileNameLabel.grid(row = 3,column = 0,padx = 10,pady = 5)
+        self.fileNameLabel.grid(row = 4,column = 0,padx = 10,pady = 5)
         
         self.fileNameEntry = tk.Entry(self)
-        self.fileNameEntry.grid(row = 3,column = 1,padx = 10,pady =5)
+        self.fileNameEntry.grid(row = 4,column = 1,padx = 10,pady =5)
         
         self.downloadPathLabel = tk.Label(self, text = "Path to Download to:")
-        self.downloadPathLabel.grid(row = 4,column = 0,padx = 10,pady = 5)
+        self.downloadPathLabel.grid(row = 5,column = 0,padx = 10,pady = 5)
         
         self.downloadPathEntry = tk.Entry(self)
-        self.downloadPathEntry.grid(row = 4,column = 1,padx = 10,pady =5)
+        self.downloadPathEntry.grid(row = 5,column = 1,padx = 10,pady =5)
         
         downloadButton = tk.Button(self, text = "Download", command = lambda:self.Download())
-        downloadButton.grid(row = 5, column = 0,columnspan = 2 ,padx = 10, pady = 5)
+        downloadButton.grid(row = 6, column = 0,columnspan = 2 ,padx = 10, pady = 5)
         
         backButton = tk.Button(self, text = "Back", command = lambda:self.controllerWindow.DisplayPage("UploadDownload"))
-        backButton.grid(row = 6, column = 0,columnspan = 2, pady = 10)
+        backButton.grid(row = 7, column = 0,columnspan = 2, pady = 10)
         
     def PopulateFileList(self):
         try:
-            self.fileList = self.controllerWindow.client.NList(None)
-            self.downloadList.configure(state="normal")
-            self.downloadList.delete(1.0,tk.END)
-            self.downloadList.insert(tk.END,self.fileList)
-            self.downloadList.configure(state="disabled")
+            endOfFileChar = ", "
+            #endOfFileChar = "\r\n"
+            fileList = self.controllerWindow.client.NList(None).split(endOfFileChar)
+            for f in fileList:
+                self.downloadList.insert(tk.END,f)                               
         except cl.DoesntExist:
             tkMessageBox.showinfo("Directory Error", "The Directory you tried to list does not exist on the server.")
             self.controllerWindow.DisplayPage("UploadDownload")
@@ -181,13 +186,37 @@ class Download(tk.Frame):
             self.controllerWindow.DisplayPage("UploadDownload")
             
       
+    def DownloadListDblClk(self,event):
+        selected = self.downloadList.get(self.downloadList.curselection())
+        if "." not in selected:
+            #self.ChangeDirectory(selected)
+            print "Entering folder " + selected
+        else:
+            self.fileNameEntry.delete(0, tk.END)
+            self.fileNameEntry.insert(0, selected)
+        
+    def ChangeDirectory(self, directory):
+        try:
+            self.controllerWindow.client.CWD(directory)
+            self.PopulateFileList()
+        except:
+            tkMessageBox.showinfo("Directory Error", "There was an error changing directory" )
+            self.controllerWindow.DisplayPage("Download")
     
+    def ParentDirectory(self):
+        try:
+            self.controllerWindow.client.CDUP()
+            self.PopulateFileList()
+        except:
+            tkMessageBox.showinfo("Directory Error", "There was an error changing directory" )
+            self.controllerWindow.DisplayPage("Download")
+            
     def Download(self):
         filename = self.fileNameEntry.get()
         downloadPath = self.downloadPathEntry.get()
         try:
             self.controllerWindow.client.RETR(downloadPath,filename)
-            tkMessageBox.showinfo("File Transfer in Progress", "The file you requested is being downloaded now. Please wait for it to finish before you continue.")
+            tkMessageBox.showinfo("File Transfer Completed", "The file you requested has been downloaded.")
         except cl.BadConnection:
             tkMessageBox.showinfo("Connection Error", "There was an error with the data connection transfer. Please try again later")
             self.controllerWindow.DisplayPage("Download")
@@ -205,17 +234,29 @@ class Upload(tk.Frame):
         self.window = window
         self.controllerWindow = controllerWindow
 
-        self.upLabel = tk.Label(self,text = "Enter a filepath to upload")
-        self.upLabel.grid(row = 0,padx = 30,pady = 10)
+        self.upLabel = tk.Label(self,text = "Type in a file path and navigate to the folder where you wish to upload on the server")
+        self.upLabel.grid(row = 0,padx = 30,pady = 10, columnspan = 2)
         
-        self.uploadEntry = tk.Entry(self)
-        self.uploadEntry.grid(row = 1,padx = 10,pady = 10)
-              
+        self.uploadLabel = tk.Label(self, text = "Filepath of file to be uploaded: ")
+        self.uploadLabel.grid(row = 1,padx = 2,pady = 10, column = 0)
+        
+        self.uploadEntry = tk.Entry(self, width = 50)
+        self.uploadEntry.grid(row = 1,padx = 2,pady = 10, column = 1)
+        
+        self.parentDirButton = tk.Button(self,text = "Go to Parent Directory",
+                                         command = lambda:self.ParentDirectory())
+        
+        self.parentDirButton.grid(row = 2,column = 0,padx = 30,pady = 2, columnspan = 2)
+        
+        self.folderList = tk.Listbox(self, height = 10, width = 50)
+        self.folderList.bind('<Double-Button-1>', self.UploadListDblClk)
+        self.folderList.grid(row = 3, column = 0,columnspan = 2, padx = 10, pady = 10)
+        
         uploadButton = tk.Button(self, text = "Upload", command = lambda:self.Upload())
-        uploadButton.grid(row = 2, padx = 20, pady = 10)
+        uploadButton.grid(row = 4, padx = 20, pady = 10, columnspan = 2)
         
         backButton = tk.Button(self, text = "Back", command = lambda:self.controllerWindow.DisplayPage("UploadDownload"))
-        backButton.grid(row = 3, padx = 20, pady = 10)
+        backButton.grid(row = 5, padx = 20, pady = 10, columnspan = 2)
         
     def Upload(self):
         uploadPath = self.uploadEntry.get()
@@ -234,6 +275,45 @@ class Upload(tk.Frame):
         except cl.ResponseNotHandled as rnh:
             tkMessageBox.showinfo("Response Not Understood", "The server responded with a code that the application did not understand: "+rnh.response )
             self.controllerWindow.DisplayPage("Upload")
-        
+            
+    def PopulateFileList(self):
+        try:
+            endOfFileChar = ", "
+            #endOfFileChar = "\r\n"
+            fileList = self.controllerWindow.client.NList(None).split(endOfFileChar)
+            for f in fileList:
+                self.folderList.insert(tk.END,f)      
+        except cl.DoesntExist:
+            tkMessageBox.showinfo("Directory Error", "The Directory you tried to list does not exist on the server.")
+            self.controllerWindow.DisplayPage("UploadDownload")
+        except cl.LoginError:
+            tkMessageBox.showinfo("Login Error", "You are not logged in.")
+            self.controllerWindow.DisplayPage("Login")
+        except cl.ResponseNotHandled as rnh:
+            tkMessageBox.showinfo("Response Not Understood", "The server responded with a code that the application did not understand: "+rnh.response )
+            self.controllerWindow.DisplayPage("UploadDownload")
+            
+    def UploadListDblClk(self,event):
+        selected = self.folderList.get(self.downloadList.curselection())
+        if "." not in selected:
+            #self.ChangeDirectory(selected)
+            print "Entering folder " + selected
+          
+            
+    def ChangeDirectory(self, directory):
+        try:
+            self.controllerWindow.client.CWD(directory)
+            self.PopulateFileList()
+        except:
+            tkMessageBox.showinfo("Directory Error", "There was an error changing directory" )
+            self.controllerWindow.DisplayPage("Upload")
+    
+    def ParentDirectory(self):
+        try:
+            self.controllerWindow.client.CDUP()
+        except:
+            tkMessageBox.showinfo("Directory Error", "There was an error changing directory" )
+            self.controllerWindow.DisplayPage("Upload") 
+            
 FTPGUI = FTPGUI()
 FTPGUI.mainloop()
