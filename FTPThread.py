@@ -149,6 +149,9 @@ class FTPThread(threading.Thread):
         
     def ChangeDirectory(self):
         if self.loggedIn:
+            if(self.userFolder[-1] != "/"):
+                self.userFolder = self.userFolder + "/"
+                
             self.parameter = self.parameter.replace("/", "")
             if(os.path.isdir(self.userFolder + self.parameter)):
                 self.userFolder = self.userFolder + self.parameter + "/"

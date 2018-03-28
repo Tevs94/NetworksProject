@@ -174,7 +174,7 @@ class ClientHandler():
     def CWD(self, directory):
         if(directory == ""):
             raise NoFileAddress
-        
+            
         self.SendCommand("CWD " + "/" + directory)
         reply = self.connectionSocket.recv(self.buffer)  
         
