@@ -121,7 +121,7 @@ class FTPThread(threading.Thread):
             
             if(os.path.isdir(self.userFolder + directory)):
                 dirList = os.listdir(self.userFolder + directory)
-                sendString = ", ".join(dirList)
+                sendString = "\r\n".join(dirList)
                 self.dataSocket.send(sendString)
             else:
                 self.SendReply(550)
@@ -167,13 +167,13 @@ class FTPThread(threading.Thread):
             }
      
     def CommandResolve(self,commandString):
-        commandString = commandString.split("\r\n")
-        command = commandString[0].split()
+        commandString = commandString.replace("\r\n" , "")
+        command = commandString.split()
         commandCode = command[0]
         if command.__len__() == 1:
             commandParameter = None
         else:
-            commandParameter = command[1]
+            commandParameter = commandString.replace(commandCode + " ","")
         try:
             self.parameter = commandParameter
             self.commands.get(commandCode.upper())(self)

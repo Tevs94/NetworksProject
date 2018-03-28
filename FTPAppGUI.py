@@ -170,8 +170,7 @@ class Download(tk.Frame):
         
     def PopulateFileList(self):
         try:
-            endOfFileChar = ", "
-            #endOfFileChar = "\r\n"
+            endOfFileChar = "\r\n"
             fileList = self.controllerWindow.client.NList(None).split(endOfFileChar)
             self.downloadList.delete(0,tk.END) 
             for f in fileList:
@@ -280,8 +279,7 @@ class Upload(tk.Frame):
             
     def PopulateFileList(self):
         try:
-            endOfFileChar = ", "
-            #endOfFileChar = "\r\n"
+            endOfFileChar = "\r\n"
             fileList = self.controllerWindow.client.NList(None).split(endOfFileChar)
             self.folderList.delete(0,tk.END)
             for f in fileList:
@@ -297,7 +295,7 @@ class Upload(tk.Frame):
             self.controllerWindow.DisplayPage("UploadDownload")
             
     def UploadListDblClk(self,event):
-        selected = self.folderList.get(self.downloadList.curselection())
+        selected = self.folderList.get(self.folderList.curselection())
         if "." not in selected:
             #self.ChangeDirectory(selected)
             print "Entering folder " + selected
