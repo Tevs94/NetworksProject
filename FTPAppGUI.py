@@ -189,8 +189,7 @@ class Download(tk.Frame):
     def DownloadListDblClk(self,event):
         selected = self.downloadList.get(self.downloadList.curselection())
         if "." not in selected:
-            #self.ChangeDirectory(selected)
-            print "Entering folder " + selected
+            self.ChangeDirectory(selected)
         else:
             self.fileNameEntry.delete(0, tk.END)
             self.fileNameEntry.insert(0, selected)
@@ -297,9 +296,7 @@ class Upload(tk.Frame):
     def UploadListDblClk(self,event):
         selected = self.folderList.get(self.folderList.curselection())
         if "." not in selected:
-            #self.ChangeDirectory(selected)
-            print "Entering folder " + selected
-          
+            self.ChangeDirectory(selected)
             
     def ChangeDirectory(self, directory):
         try:

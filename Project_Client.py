@@ -179,7 +179,7 @@ class ClientHandler():
         reply = self.connectionSocket.recv(self.buffer)  
         
         if "250" in reply:
-            
+            print "change directory successful"
         elif "550" in reply:
             raise DoesntExist(directory)
             
@@ -188,7 +188,7 @@ class ClientHandler():
         reply = self.connectionSocket.recv(self.buffer)
         
         if "200" in reply:
-            
+            print "change directory successful"
         elif "550" in reply:
             raise AccessDenied
             
