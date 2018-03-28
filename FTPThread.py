@@ -46,6 +46,7 @@ class FTPThread(threading.Thread):
             self.SendReply(230)
             self.loggedIn = True
             self.userFolder = "./Users/" + self.currentUsername + "/"
+            self.root = "./Users/" + self.currentUsername
            
         else:
             self.SendReply(530)
@@ -146,6 +147,28 @@ class FTPThread(threading.Thread):
             self.SendReply(530) 
             self.dataSocket.close()
         
+    def ChangeDirectory(self):
+        if self.loggedIn:
+            if(os.path.isdir(self.userFolder + self.parameter)):
+                self.userFolder = self.userFolder + self.parameter
+                self.SendReply(250)
+            else:
+                self.SendReply(550)
+        else:
+            self.SendReply(530)
+            
+    def BackDirectory(self):
+        if self.loggedIn:
+            tempPath = self.userFolder.split("\\")
+            backpathaArray = tempPath.replace(tempPath[-1],"")
+            if(len(backpathaArray) > 1):
+                self.userFolder = self.userFolder.replace(tempPath[-1],"")
+                self.SendReply(200)
+            else:
+                self.SendReply(550)
+        else:
+            self.SendReply(530)
+            
     def OkServer(self):
         print "OK Server"
         
@@ -162,6 +185,8 @@ class FTPThread(threading.Thread):
             "NLST": lambda self: self.NList(),
             "RETR": lambda self: self.Retrieve(self.parameter),
             "STOR": lambda self: self.Store(self.parameter),
+            "CWD": lambda self: self.ChangeDirectory(),
+            "CDUP": lambda self: self.BackDirectory(),
             "NOOP": lambda self: self.OkServer(),
             "QUIT": lambda self: self.Quit()
             }
