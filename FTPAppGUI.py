@@ -280,6 +280,7 @@ class Upload(tk.Frame):
         try:
             endOfFileChar = "\r\n"
             fileList = self.controllerWindow.client.NList(None).split(endOfFileChar)
+            print fileList
             self.folderList.delete(0,tk.END)
             for f in fileList:
                 self.folderList.insert(tk.END,f)      
@@ -309,6 +310,7 @@ class Upload(tk.Frame):
     def ParentDirectory(self):
         try:
             self.controllerWindow.client.CDUP()
+            self.PopulateFileList()
         except:
             tkMessageBox.showinfo("Directory Error", "There was an error changing directory" )
             self.controllerWindow.DisplayPage("Upload") 
