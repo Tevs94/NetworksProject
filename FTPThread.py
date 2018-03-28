@@ -176,7 +176,7 @@ class FTPThread(threading.Thread):
             commandParameter = command[1]
         try:
             self.parameter = commandParameter
-            self.commands.get(commandCode)(self)
+            self.commands.get(commandCode.upper())(self)
         except (KeyError, TypeError):
             self.SendReply(500)
 

@@ -173,6 +173,7 @@ class Download(tk.Frame):
             endOfFileChar = ", "
             #endOfFileChar = "\r\n"
             fileList = self.controllerWindow.client.NList(None).split(endOfFileChar)
+            self.downloadList.delete(0,tk.END) 
             for f in fileList:
                 self.downloadList.insert(tk.END,f)                               
         except cl.DoesntExist:
@@ -282,6 +283,7 @@ class Upload(tk.Frame):
             endOfFileChar = ", "
             #endOfFileChar = "\r\n"
             fileList = self.controllerWindow.client.NList(None).split(endOfFileChar)
+            self.folderList.delete(0,tk.END)
             for f in fileList:
                 self.folderList.insert(tk.END,f)      
         except cl.DoesntExist:
