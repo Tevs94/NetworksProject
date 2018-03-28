@@ -3,6 +3,7 @@ import os
 
 class ServerNotResponding(Exception):
     pass
+
 class ResponseNotHandled(Exception):
     def __init__(self, response):
         self.response = response
@@ -170,8 +171,27 @@ class ClientHandler():
         else:
             raise DoesntExist(fileName)
                  
+    def CWD(self, directory):
+        if(directory == ""):
+            raise NoFileAddress
         
-
+        self.SendCommand("CWD " + "\\" + directory)
+        reply = self.connectionSocket.recv(self.buffer)  
+        
+        if "250" in reply:
+            
+        elif "550" in reply:
+            raise DoesntExist(directory)
+            
+    def CDUP(self):
+        self.SendCommand("CDUP")
+        reply = self.connectionSocket.recv(self.buffer)
+        
+        if "200" in reply:
+            
+        elif "550" in reply:
+            raise AccessDenied
+            
     def SendCommand(self,message) :
         self.connectionSocket.send(message + "\r\n")
         
