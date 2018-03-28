@@ -59,7 +59,7 @@ class FTPThread(threading.Thread):
         self.SendReply(200)
         
     def Passive(self):
-        p1 = random.randint(0, 256)
+        p1 = random.randint(0, 100)
         p2 = random.randint(0, 256)
         self.dataportNumber = (p1 * 256) + p2
         IPAddress = gethostbyname(gethostname())

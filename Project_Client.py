@@ -136,7 +136,6 @@ class ClientHandler():
     def STOR(self,fileAddress): 
         if(fileAddress == ""):
             raise InCorrectLocation
-            
         fileExists = False
         AddressParts = fileAddress.split("\\")
         fileName = AddressParts[-1]

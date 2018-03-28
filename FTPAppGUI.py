@@ -261,6 +261,7 @@ class Upload(tk.Frame):
         uploadPath = self.uploadEntry.get()
         try:
             self.controllerWindow.client.STOR(uploadPath)
+            print "uploadPathUI: " + uploadPath
             tkMessageBox.showinfo("File Transfer Completed", "The file you requested has been uploaded.")
             self.controllerWindow.DisplayPage("UploadDownload")
         except cl.DoesntExist:
