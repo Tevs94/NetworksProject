@@ -149,8 +149,9 @@ class FTPThread(threading.Thread):
         
     def ChangeDirectory(self):
         if self.loggedIn:
+            self.parameter = self.parameter.replace("/", "")
             if(os.path.isdir(self.userFolder + self.parameter)):
-                self.userFolder = self.userFolder + self.parameter
+                self.userFolder = self.userFolder + self.parameter + "/"
                 self.SendReply(250)
             else:
                 self.SendReply(550)
@@ -159,10 +160,14 @@ class FTPThread(threading.Thread):
             
     def BackDirectory(self):
         if self.loggedIn:
-            tempPath = self.userFolder.split("\\")
-            backpathaArray = tempPath.replace(tempPath[-1],"")
+            if(self.userFolder[-1] == "/"):
+                self.userFolder = self.userFolder[:-1]
+            tempPath = self.userFolder.split("/")
+            print self.userFolder
+            print tempPath
+            backpathaArray = tempPath[1:-1]
             if(len(backpathaArray) > 1):
-                self.userFolder = self.userFolder.replace(tempPath[-1],"")
+                self.userFolder = self.userFolder.replace(tempPath[-1],"") + "/"
                 self.SendReply(200)
             else:
                 self.SendReply(550)

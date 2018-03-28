@@ -175,7 +175,7 @@ class ClientHandler():
         if(directory == ""):
             raise NoFileAddress
         
-        self.SendCommand("CWD " + "\\" + directory)
+        self.SendCommand("CWD " + "/" + directory)
         reply = self.connectionSocket.recv(self.buffer)  
         
         if "250" in reply:
